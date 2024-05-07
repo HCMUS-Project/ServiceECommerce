@@ -73,7 +73,14 @@ export class ReviewService {
                 });
             }
 
-            return review;
+            return {
+                review: {
+                    ...review,
+                    productId:review.product_id,
+                    createdAt: review.created_at.toISOString(),
+                    updatedAt: review.updated_at.toISOString(),
+                },
+            };
         } catch (error) {
             throw new Error(error.message);
         }
@@ -175,11 +182,13 @@ export class ReviewService {
             });
 
             return {
-                ...reviewUpdate,
-                createdAt: reviewUpdate.created_at.toISOString(),
-                updatedAt: reviewUpdate.updated_at.toISOString(),
-                productId: reviewUpdate.product_id,
-                rating: Number(reviewUpdate.rating),
+                review: {
+                    ...reviewUpdate,
+                    createdAt: reviewUpdate.created_at.toISOString(),
+                    updatedAt: reviewUpdate.updated_at.toISOString(),
+                    productId: reviewUpdate.product_id,
+                    rating: Number(reviewUpdate.rating),
+                },
             };
         } catch (error) {
             throw error;

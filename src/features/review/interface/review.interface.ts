@@ -15,7 +15,7 @@ export interface IReviewResponse {
 }
 
 export interface ICreateReviewRequest extends CreateReviewRequest.AsObject {}
-export interface ICreateReviewResponse extends ReviewResponse {}
+export interface ICreateReviewResponse extends IReviewResponse {}
 
 export interface IFindAllReviewRequest extends FindAllReviewsRequest.AsObject {}
 export interface IFindAllReviewResponse
@@ -24,7 +24,7 @@ export interface IFindAllReviewResponse
 }
 
 export interface IUpdateReviewRequest extends UpdateReviewRequest.AsObject {}
-export interface IUpdateReviewResponse extends IReview {}
+export interface IUpdateReviewResponse extends IReviewResponse {}
 
 export interface IDeleteReviewRequest extends DeleteReviewRequest.AsObject {}
 export interface IDeleteReviewResponse extends DeleteReviewResponse.AsObject {}

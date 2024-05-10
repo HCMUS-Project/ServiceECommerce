@@ -15,16 +15,17 @@ service VoucherService {
 
 message Voucher {
     string id = 1;
-    string domain = 2;
-    string voucher_name = 3;
-    string voucher_code = 4;
-    double max_discount = 5;
-    double min_app_value = 6;
-    double discount_percent = 7;
-    string expire_at = 8;
-    string created_at = 9;
-    string updated_at = 10;
-    string deleted_at = 11;
+    string type = 2;
+    string domain = 3;
+    string voucher_name = 4;
+    string voucher_code = 5;
+    double max_discount = 6;
+    double min_app_value = 7;
+    double discount_percent = 8;
+    string expire_at = 9;
+    string created_at = 10;
+    string updated_at = 11;
+    string deleted_at = 12;
 }
 
 message CreateVoucherRequest {

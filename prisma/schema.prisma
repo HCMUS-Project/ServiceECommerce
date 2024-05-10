@@ -115,6 +115,7 @@ model ProductCategory {
 }
 model Review {
     id         String  @id @default(uuid())
+    type       String  @default("ecommerce")
     domain     String
     product_id String
     user       String
@@ -129,6 +130,7 @@ model Review {
 }
 model Voucher {
     id               String   @id @default(uuid())
+    type             String   @default("ecommerce")
     domain           String
     voucher_name     String
     voucher_code     String

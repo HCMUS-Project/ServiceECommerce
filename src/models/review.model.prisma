@@ -1,5 +1,6 @@
 model Review {
     id         String  @id @default(uuid())
+    type       String  @default("ecommerce")
     domain     String
     product_id String
     user       String

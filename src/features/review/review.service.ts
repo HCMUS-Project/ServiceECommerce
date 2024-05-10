@@ -135,6 +135,7 @@ export class ReviewService {
                 reviews: reviews.map(review => {
                     return {
                         id: review.id,
+                        type: review.type,
                         domain: review.domain,
                         productId: review.product_id,
                         user: review.user,

@@ -39,7 +39,7 @@ export class VoucherService {
                     where: { voucher_code: data.voucherCode, domain: user.domain },
                 })
             ) {
-                throw new GrpcAlreadyExistsException('Voucher');
+                throw new GrpcAlreadyExistsException('VOUCHER_ALREADY_EXIST');
             }
 
             // create voucher
@@ -114,7 +114,7 @@ export class VoucherService {
 
             // check if voucher not exists
             if (!voucher) {
-                throw new GrpcItemNotFoundException('Voucher');
+                throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
             }
 
             return {
@@ -152,7 +152,7 @@ export class VoucherService {
 
             // If the voucher does not exist, throw an error
             if (!voucher) {
-                throw new GrpcItemNotFoundException('CATEGORY_NOT_FOUND');
+                throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
             }
 
             // If the voucher exists, perform the update
@@ -206,7 +206,7 @@ export class VoucherService {
 
             // if the voucher does not exist, throw an error
             if (!voucher) {
-                throw new GrpcItemNotFoundException('Voucher');
+                throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
             }
 
             // delete voucher by id and domain
@@ -247,7 +247,7 @@ export class VoucherService {
 
             // check if voucher not exists
             if (!voucher) {
-                throw new GrpcItemNotFoundException('Voucher');
+                throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
             }
 
             return {

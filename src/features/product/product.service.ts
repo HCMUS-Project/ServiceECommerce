@@ -479,7 +479,7 @@ export class ProductService {
 
             // if the product does not exist, throw an error
             if (!product) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             // update product by id and domain in incresea view
@@ -502,7 +502,7 @@ export class ProductService {
 
             // check if product not exists
             if (!newProduct) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             return {
@@ -540,7 +540,7 @@ export class ProductService {
 
             // if the product does not exist, throw an error
             if (!product) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             // update product by id and domain in add quantity
@@ -563,7 +563,7 @@ export class ProductService {
 
             // check if product not exists
             if (!newProduct) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             return {

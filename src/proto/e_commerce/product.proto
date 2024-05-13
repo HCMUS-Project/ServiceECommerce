@@ -66,7 +66,6 @@ message SearchProductsRequest {
     double min_price = 4;
     double max_price = 5;
     double rating = 6;
-    int32 sold = 7;
 }
 
 message IncreaseProductViewRequest {

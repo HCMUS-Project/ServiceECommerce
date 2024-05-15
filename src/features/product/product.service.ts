@@ -305,7 +305,7 @@ export class ProductService {
             } as IUpdateProductResponse;
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             } else {
                 // If it's not a known Prisma error, rethrow the error
                 throw error;
@@ -329,7 +329,7 @@ export class ProductService {
 
             // if the product does not exist, throw an error
             if (!product) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             // delete product by id and domain
@@ -347,7 +347,7 @@ export class ProductService {
 
             // check if product not exists
             if (!deletedProduct) {
-                throw new GrpcItemNotFoundException('Product');
+                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
 
             return {

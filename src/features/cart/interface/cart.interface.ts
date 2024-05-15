@@ -3,9 +3,9 @@ import {
     CartItem,
     CartResponse,
     CreateCartRequest,
+    AddItemsToCartRequest,
     DeleteCartRequest,
     FindAllCartsByUserIdRequest,
-    FindAllCartsResponse,
     FindCartByIdRequest,
     UpdateCartRequest,
 } from 'src/proto_build/e_commerce/cart_pb';
@@ -26,6 +26,8 @@ export interface ICreateCartRequest extends Omit<CreateCartRequest.AsObject, 'ca
 }
 export interface ICreateCartResponse extends ICartResponse {}
 
+export interface IAddItemsToCartRequest extends AddItemsToCartRequest.AsObject {}
+
 export interface IFindAllCartsByUserIdRequest extends FindAllCartsByUserIdRequest.AsObject {}
 export interface IFindAllCartsByUserIdResponse {
     carts: ICart[];
@@ -34,9 +36,7 @@ export interface IFindAllCartsByUserIdResponse {
 export interface IFindCartByIdRequest extends FindCartByIdRequest.AsObject {}
 export interface IFindCartByIdResponse extends ICartResponse {}
 
-export interface IUpdateCartRequest extends Omit<UpdateCartRequest.AsObject, 'cartItemsList'> {
-    cartItems: ICartItem[];
-}
+export interface IUpdateCartRequest extends UpdateCartRequest.AsObject {}
 export interface IUpdateCartResponse extends ICartResponse {}
 
 export interface IDeleteCartRequest extends DeleteCartRequest.AsObject {}

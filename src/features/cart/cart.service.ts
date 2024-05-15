@@ -4,6 +4,7 @@ import {
     ICartItem,
     ICreateCartRequest,
     ICreateCartResponse,
+    IAddItemsToCartRequest,
     IDeleteCartRequest,
     IDeleteCartResponse,
     IFindAllCartsByUserIdRequest,
@@ -54,22 +55,20 @@ export class CartService {
         }
     }
 
-    async create(dataRequest: ICreateCartRequest): Promise<ICreateCartResponse> {
-        const { user, cartItems } = dataRequest;
+    async addItemsToCart(dataRequest: IAddItemsToCartRequest): Promise<ICreateCartResponse> {
+        const { user, cartItem } = dataRequest;
         // check role of user
         if (user.role.toString() !== getEnumKeyByEnumValue(Role, Role.USER)) {
             throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
         }
         try {
             // Check quantities of product have to be greater than quantity of product database
-            for (let i = 0; i < cartItems.length; i++) {
-                const product = await this.productService.findOneById({
-                    user: user,
-                    id: cartItems[i].productId,
-                });
-                if (product.quantity < cartItems[i].quantity) {
-                    throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH');
-                }
+            const product = await this.productService.findOneById({
+                user: user,
+                id: cartItem.productId,
+            });
+            if (product.quantity < cartItem.quantity) {
+                throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH');
             }
 
             const cartExists = await this.prismaService.cart.findFirst({
@@ -81,27 +80,69 @@ export class CartService {
 
             // Check if cart already exists
             if (cartExists !== null) {
-                throw new GrpcAlreadyExistsException('CART_EXISTS');
-            }
+                // if cart exists, add items to cart
+                const cartItemExists = await this.prismaService.cartItem.findFirst({
+                    where: {
+                        cart_id: cartExists.id,
+                        product_id: cartItem.productId,
+                    },
+                });
 
-            // Create cart
-            const cart = await this.prismaService.cart.create({
-                data: {
+                if (cartItemExists) {
+                    const updatedCartItem = await this.prismaService.cartItem.update({
+                        where: {
+                            id: cartItemExists.id,
+                        },
+                        data: {
+                            quantity: cartItemExists.quantity + cartItem.quantity,  
+                        },
+                    });
+                }
+                else {
+                    // if product not exists in cart, create new cart item
+                    const createdCartItem = await this.prismaService.cartItem.create({
+                        data: {
+                            cart_id: cartExists.id,
+                            product_id: cartItem.productId,
+                            quantity: cartItem.quantity,
+                        },
+                    });
+                }
+            }
+            else{
+                // if cart not exists, create new cart
+                const createdCart = await this.prismaService.cart.create({
+                    data: {
+                        domain: user.domain,
+                        user: user.email,
+                        cartItems: {
+                            create: [
+                                {
+                                    product_id: cartItem.productId,
+                                    quantity: cartItem.quantity,
+                                },
+                            ],
+                        },
+                    },
+                    include: {
+                        cartItems: true,
+                    },
+                });
+            }
+            const cart = await this.prismaService.cart.findFirst({
+                where: {
                     domain: user.domain,
                     user: user.email,
-                    total_price: await this.calculateTotalPrice(cartItems),
-                    cartItems: {
-                        create: cartItems.map(cartItem => ({
-                            product: { connect: { id: cartItem.productId } },
-                            quantity: cartItem.quantity,
-                        })),
-                    },
                 },
                 include: {
-                    cartItems: true,
+                    cartItems: {
+                        select: {
+                            product_id: true,
+                            quantity: true,
+                        },
+                    },
                 },
             });
-
             return {
                 cart: {
                     ...cart,
@@ -110,7 +151,6 @@ export class CartService {
                         ...cartItem,
                         productId: cartItem.product_id,
                     })),
-                    totalPrice: Number(cart.total_price),
                     createdAt: cart.created_at.toISOString(),
                     updatedAt: cart.updated_at.toISOString(),
                     deletedAt: cart.deleted_at ? cart.deleted_at.toISOString() : null,
@@ -148,7 +188,6 @@ export class CartService {
                         ...cartItem,
                         productId: cartItem.product_id,
                     })),
-                    totalPrice: Number(cart.total_price),
                     createdAt: cart.created_at.toISOString(),
                     updatedAt: cart.updated_at.toISOString(),
                     deletedAt: cart.deleted_at ? cart.deleted_at.toISOString() : null,
@@ -192,7 +231,6 @@ export class CartService {
                         ...cartItem,
                         productId: cartItem.product_id,
                     })),
-                    totalPrice: Number(cart.total_price),
                     createdAt: cart.created_at.toISOString(),
                     updatedAt: cart.updated_at.toISOString(),
                     deletedAt: cart.deleted_at ? cart.deleted_at.toISOString() : null,
@@ -210,36 +248,58 @@ export class CartService {
             throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
         }
         try {
-            for (let i = 0; i < cartItems.length; i++) {
-                const product = await this.productService.findOneById({
-                    user: user,
-                    id: cartItems[i].productId,
+            const product = await this.productService.findOneById({
+                user: user,
+                id: cartItems.productId,
+            });
+            if (product.quantity < cartItems.quantity) {
+                throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH: ' + product.name);
+            }
+
+            if (cartItems.quantity === 0) {
+                const deleteCartItem = await this.prismaService.cartItem.delete({
+                    where: {
+                        id: cartItems.productId,
+                        cart_id: id,
+                    },
                 });
-                if (product.quantity < cartItems[i].quantity) {
-                    throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH');
+            }
+            else{
+                const cartItemExists = await this.prismaService.cartItem.findFirst({
+                    where: {
+                        cart_id: id,
+                        product_id: cartItems.productId,
+                    },
+                });
+                if (!cartItemExists) {
+                    throw new GrpcItemNotFoundException('CART_ITEM_NOT_FOUND');
+                }
+                else{
+                    const updatedCartItem = await this.prismaService.cartItem.update({
+                        where: {
+                            id: cartItemExists.id,
+                        },
+                        data: {
+                            quantity: cartItems.quantity,
+                        },
+                    });
                 }
             }
 
-            // Update cart
-            const updatedCart = await this.prismaService.cart.update({
-                where: { id },
-                data: {
-                    user: user.email,
-                    domain: user.domain,
-                    // calculate total price
+            const updatedCart = await this.prismaService.cart.findUnique({
+                where: {
+                    id: id,
+                },
+                include: {
                     cartItems: {
-                        deleteMany: {},
-                        create: cartItems.map(cartItem => ({
-                            product: { connect: { id: cartItem.productId } },
-                            quantity: cartItem.quantity,
-                        })),
+                        select: {
+                            product_id: true,
+                            quantity: true,
+                        },
                     },
                 },
-                // include cartItems
-                include: {
-                    cartItems: true,
-                },
             });
+
 
             return {
                 cart: {
@@ -249,7 +309,6 @@ export class CartService {
                         ...cartItem,
                         productId: cartItem.product_id,
                     })),
-                    totalPrice: Number(updatedCart.total_price),
                     createdAt: updatedCart.created_at.toISOString(),
                     updatedAt: updatedCart.updated_at.toISOString(),
                     deletedAt: updatedCart.deleted_at ? updatedCart.deleted_at.toISOString() : null,
@@ -297,7 +356,6 @@ export class CartService {
                         ...cartItem,
                         productId: cartItem.product_id,
                     })),
-                    totalPrice: Number(deleteCart.total_price),
                     createdAt: deleteCart.created_at.toISOString(),
                     updatedAt: deleteCart.updated_at.toISOString(),
                     deletedAt: deleteCart.deleted_at ? deleteCart.deleted_at.toISOString() : null,

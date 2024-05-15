@@ -4,6 +4,7 @@ import { CartService } from './cart.service';
 import {
     ICreateCartRequest,
     ICreateCartResponse,
+    IAddItemsToCartRequest,
     IDeleteCartRequest,
     IDeleteCartResponse,
     IFindAllCartsByUserIdRequest,
@@ -18,9 +19,9 @@ import {
 export class CartController {
     constructor(private readonly cartService: CartService) {}
 
-    @GrpcMethod('CartService', 'CreateCart')
-    async create(data: ICreateCartRequest): Promise<ICreateCartResponse> {
-        return await this.cartService.create(data);
+    @GrpcMethod('CartService', 'AddItemsToCart')
+    async addItemsToCart(data: IAddItemsToCartRequest): Promise<ICreateCartResponse> {
+        return await this.cartService.addItemsToCart(data);
     }
 
     @GrpcMethod('CartService', 'FindAllCartsByUserId')

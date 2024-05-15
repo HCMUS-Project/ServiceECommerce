@@ -5,7 +5,7 @@ import "auth/user_token.proto";  // Assuming the path is correct for the user_to
 package cart;
 
 service CartService {
-    rpc CreateCart(CreateCartRequest) returns (CartResponse);
+    rpc AddItemsToCart(AddItemsToCartRequest) returns (CartResponse);
     rpc FindAllCartsByUserId(FindAllCartsByUserIdRequest) returns (FindAllCartsResponse);
     rpc FindCartById(FindCartByIdRequest) returns (CartResponse);
     rpc UpdateCart(UpdateCartRequest) returns (CartResponse);
@@ -19,17 +19,22 @@ message CartItem {
 
 message Cart {
     string id = 1;
-    repeated CartItem cart_items = 3;
-    double total_price = 4;
-    string created_at = 5;
-    string updated_at = 6;
-    string deleted_at = 7;
+    repeated CartItem cart_items = 2;
+    string created_at = 3;
+    string updated_at = 4;
+    string deleted_at = 5;
 }
 
 message CreateCartRequest {
     userToken.User user = 1;
     string user_id = 2;
     repeated CartItem cart_items = 3;
+}
+
+message AddItemsToCartRequest {
+    userToken.User user = 1;
+    string user_id = 2;
+    CartItem cart_item = 3;
 }
 
 message FindAllCartsByUserIdRequest {
@@ -46,7 +51,7 @@ message UpdateCartRequest {
     userToken.User user = 1;
     string user_id = 2;
     string id = 3;
-    repeated CartItem cart_items = 4;
+    CartItem cart_items = 4;
 }
 
 message DeleteCartRequest {

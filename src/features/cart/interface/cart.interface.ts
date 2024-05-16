@@ -1,8 +1,7 @@
 import {
     Cart,
     CartItem,
-    CartResponse,
-    CreateCartRequest,
+    CartResponse, 
     AddItemsToCartRequest,
     DeleteCartRequest,
     FindAllCartsByUserIdRequest,
@@ -21,9 +20,6 @@ export interface ICartResponse {
     cart?: ICart;
 }
 
-export interface ICreateCartRequest extends Omit<CreateCartRequest.AsObject, 'cartItemsList'> {
-    cartItems: ICartItem[];
-}
 export interface ICreateCartResponse extends ICartResponse {}
 
 export interface IAddItemsToCartRequest extends AddItemsToCartRequest.AsObject {}

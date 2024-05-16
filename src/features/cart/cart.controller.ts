@@ -2,7 +2,6 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod, MessagePattern, Payload } from '@nestjs/microservices';
 import { CartService } from './cart.service';
 import {
-    ICreateCartRequest,
     ICreateCartResponse,
     IAddItemsToCartRequest,
     IDeleteCartRequest,

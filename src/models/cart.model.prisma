@@ -3,7 +3,6 @@ model Cart {
     domain      String
     user        String
     cartItems   CartItem[]
-    total_price Decimal    @commerce_db.Decimal(19, 2)
     created_at  DateTime   @default(now())
     updated_at  DateTime   @updatedAt
     deleted_at  DateTime?

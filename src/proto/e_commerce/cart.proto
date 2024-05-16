@@ -23,13 +23,7 @@ message Cart {
     string created_at = 3;
     string updated_at = 4;
     string deleted_at = 5;
-}
-
-message CreateCartRequest {
-    userToken.User user = 1;
-    string user_id = 2;
-    repeated CartItem cart_items = 3;
-}
+} 
 
 message AddItemsToCartRequest {
     userToken.User user = 1;

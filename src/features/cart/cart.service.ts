@@ -17,12 +17,11 @@ import { getEnumKeyByEnumValue } from 'src/util/convert_enum/get_key_enum';
 import { Role } from 'src/proto_build/auth/user_token_pb';
 import {
     GrpcAlreadyExistsException,
-    GrpcInvalidArgumentException,
     GrpcPermissionDeniedException,
 } from 'nestjs-grpc-exceptions';
 import { ProductService } from '../product/product.service';
 
-import { GrpcItemNotFoundException } from 'src/common/exceptions/exceptions';
+import { GrpcInvalidArgumentException, GrpcItemNotFoundException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class CartService {
@@ -253,6 +252,8 @@ export class CartService {
             });
             if (product.quantity < cartItems.quantity) {
                 throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH: ' + product.name);
+                // throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH: sach day lam giau');
+                // throw new GrpcItemNotFoundException('PRODUCT_NOT_ENOUGH')
             }
 
             if (cartItems.quantity === 0) {
@@ -314,7 +315,9 @@ export class CartService {
                 },
             };
         } catch (error) {
-            throw new Error(error.message);
+            // console.log(error)
+            // throw new Error(error.message);
+            throw error
         }
     }
 

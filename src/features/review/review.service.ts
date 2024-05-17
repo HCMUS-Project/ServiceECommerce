@@ -33,7 +33,7 @@ export class ReviewService {
         try {
             // Check if user has purchased the product
             if (
-                user.role.toString() === Role.USER.toString() &&
+                user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER) &&
                 !(await this.checkUserPurchase(user.email, user.domain, dataCreate.productId))
             ) {
                 throw new GrpcInvalidArgumentException('USER_HAS_NOT_PURCHASED_PRODUCT');
@@ -82,7 +82,7 @@ export class ReviewService {
                 },
             };
         } catch (error) {
-            throw new Error(error.message);
+            throw error;
         }
     }
 
@@ -100,10 +100,9 @@ export class ReviewService {
                     },
                 },
             });
-
             return orderWithProduct !== null;
         } catch (error) {
-            throw new Error(error.message);
+            throw error;
         }
     }
 
@@ -150,7 +149,7 @@ export class ReviewService {
                 pageSize: pageSize,
             };
         } catch (error) {
-            throw new Error(error.message);
+            throw error;
         }
     }
 

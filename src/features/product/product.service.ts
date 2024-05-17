@@ -181,7 +181,7 @@ export class ProductService {
                     deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
                     categories: product.categories.map(category => ({
                         id: category.categoryId,
-                        name: categoryMap[category.categoryId] || 'Unknown',
+                        name: categoryMap[category.categoryId],
                     })),
                 })),
             };
@@ -242,7 +242,7 @@ export class ProductService {
                 deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
                 categories: product.categories.map(category => ({
                     id: category.categoryId,
-                    name: categoryMap[category.categoryId] || 'Unknown',
+                    name: categoryMap[category.categoryId],
                 })),
             };
         } catch (error) {

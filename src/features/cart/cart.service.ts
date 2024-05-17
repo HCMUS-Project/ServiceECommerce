@@ -65,9 +65,8 @@ export class CartService {
                 user: user,
                 id: cartItem.productId,
             });
-            if (product.quantity < cartItem.quantity) {
-                throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH');
-            }
+            
+            
 
             const cartExists = await this.prismaService.cart.findFirst({
                 where: {
@@ -75,6 +74,17 @@ export class CartService {
                     user: user.email,
                 },
             });
+
+            const cartItemExists = await this.prismaService.cartItem.findFirst({
+                where: {
+                    cart_id: cartExists.id,
+                    product_id: cartItem.productId,
+                },
+            });
+
+            if (product.quantity < (cartItem.quantity + cartItemExists.quantity)) {
+                throw new GrpcInvalidArgumentException('PRODUCT_NOT_ENOUGH');
+            }
 
             // Check if cart already exists
             if (cartExists !== null) {

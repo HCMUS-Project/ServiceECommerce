@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import {
-    ICartItem, 
+    ICartItem,
     ICreateCartResponse,
     IAddItemsToCartRequest,
     IDeleteCartRequest,
@@ -15,13 +15,13 @@ import {
 } from './interface/cart.interface';
 import { getEnumKeyByEnumValue } from 'src/util/convert_enum/get_key_enum';
 import { Role } from 'src/proto_build/auth/user_token_pb';
-import {
-    GrpcAlreadyExistsException,
-    GrpcPermissionDeniedException,
-} from 'nestjs-grpc-exceptions';
+import { GrpcAlreadyExistsException, GrpcPermissionDeniedException } from 'nestjs-grpc-exceptions';
 import { ProductService } from '../product/product.service';
 
-import { GrpcInvalidArgumentException, GrpcItemNotFoundException } from 'src/common/exceptions/exceptions';
+import {
+    GrpcInvalidArgumentException,
+    GrpcItemNotFoundException,
+} from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class CartService {
@@ -92,11 +92,10 @@ export class CartService {
                             id: cartItemExists.id,
                         },
                         data: {
-                            quantity: cartItemExists.quantity + cartItem.quantity,  
+                            quantity: cartItemExists.quantity + cartItem.quantity,
                         },
                     });
-                }
-                else {
+                } else {
                     // if product not exists in cart, create new cart item
                     const createdCartItem = await this.prismaService.cartItem.create({
                         data: {
@@ -106,8 +105,7 @@ export class CartService {
                         },
                     });
                 }
-            }
-            else{
+            } else {
                 // if cart not exists, create new cart
                 const createdCart = await this.prismaService.cart.create({
                     data: {
@@ -263,8 +261,7 @@ export class CartService {
                         cart_id: id,
                     },
                 });
-            }
-            else{
+            } else {
                 const cartItemExists = await this.prismaService.cartItem.findFirst({
                     where: {
                         cart_id: id,
@@ -273,8 +270,7 @@ export class CartService {
                 });
                 if (!cartItemExists) {
                     throw new GrpcItemNotFoundException('CART_ITEM_NOT_FOUND');
-                }
-                else{
+                } else {
                     const updatedCartItem = await this.prismaService.cartItem.update({
                         where: {
                             id: cartItemExists.id,
@@ -300,7 +296,6 @@ export class CartService {
                 },
             });
 
-
             return {
                 cart: {
                     ...updatedCart,
@@ -317,7 +312,7 @@ export class CartService {
         } catch (error) {
             // console.log(error)
             // throw new Error(error.message);
-            throw error
+            throw error;
         }
     }
 

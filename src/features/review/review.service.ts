@@ -76,7 +76,7 @@ export class ReviewService {
             return {
                 review: {
                     ...review,
-                    productId:review.product_id,
+                    productId: review.product_id,
                     createdAt: review.created_at.toISOString(),
                     updatedAt: review.updated_at.toISOString(),
                 },

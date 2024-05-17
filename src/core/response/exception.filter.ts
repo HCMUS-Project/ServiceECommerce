@@ -8,7 +8,7 @@ export class GrpcExceptionFilter implements ExceptionFilter {
 
     catch(exception: RpcException, host: ArgumentsHost) {
         const ctx = host.switchToRpc().getContext();
-        console.log(exception)
+        console.log(exception);
         // Log the error
         this.logger.error('An error occurred when handling gRPC request:', {
             props: {

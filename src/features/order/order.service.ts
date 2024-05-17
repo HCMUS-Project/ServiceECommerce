@@ -62,7 +62,7 @@ export class OrderService {
                 }
             }
 
-            voucher_applied = voucher_applied.voucher
+            voucher_applied = voucher_applied.voucher;
 
             // Calculate total price
             const total_price = await this.calculateTotalPrice(
@@ -284,8 +284,7 @@ export class OrderService {
                 // check if order is in pending stage
                 if (order.stage !== 'pending')
                     throw new GrpcResourceExhaustedException('CANNOT_CANCEL_ORDER');
-            }
-            if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.TENANT)) {
+            } else if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.TENANT)) {
                 // cancel order with tenant
             } else throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
 

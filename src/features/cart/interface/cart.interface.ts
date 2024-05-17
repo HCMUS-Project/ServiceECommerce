@@ -1,7 +1,7 @@
 import {
     Cart,
     CartItem,
-    CartResponse, 
+    CartResponse,
     AddItemsToCartRequest,
     DeleteCartRequest,
     FindAllCartsByUserIdRequest,

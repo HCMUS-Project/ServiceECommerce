@@ -257,8 +257,10 @@ export class CartService {
             if (cartItems.quantity === 0) {
                 const deleteCartItem = await this.prismaService.cartItem.delete({
                     where: {
-                        id: cartItems.productId,
-                        cart_id: id,
+                        cart_id_product_id: {
+                            product_id: cartItems.productId,
+                            cart_id: id,
+                        },
                     },
                 });
             } else {

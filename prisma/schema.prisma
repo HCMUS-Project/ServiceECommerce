@@ -11,7 +11,8 @@ generator client {
 datasource commerce_db {
   provider = "postgresql"
   url      = env("POSTGRES_URI")
-}model Cart {
+}
+model Cart {
     id          String     @id @default(uuid())
     domain      String
     user        String

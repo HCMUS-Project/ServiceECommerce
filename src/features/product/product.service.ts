@@ -55,6 +55,18 @@ export class ProductService {
 
             // create image
             const imageLink = await this.supabaseService.uploadImageAndGetLink(data.images);
+            
+            // check category exists
+            const categories = await this.prismaService.category.findMany({
+                where: {
+                    id: {
+                        in: data.categories,
+                    },
+                },
+            });
+            if (categories.length !== data.categories.length) {
+                throw new GrpcItemNotFoundException('CATEGORY_NOT_FOUND');
+            }
 
             // create product
             const newProduct = await this.prismaService.product.create({
@@ -86,10 +98,6 @@ export class ProductService {
                         name: true,
                     },
                 });
-
-                if (!category) {
-                    throw new GrpcItemNotFoundException('CATEGORY_NO_FOUND');
-                }
 
                 // Tạo mới một bản ghi trong bảng ProductCategory với trường name lấy từ category
                 const productCategory = this.prismaService.productCategory.create({
@@ -127,19 +135,40 @@ export class ProductService {
 
     async findAll(data: IFindAllProductsRequest): Promise<IFindAllProductsResponse> {
         try {
-            // find all products by domain
+            // Find all products by domain
             const products = await this.prismaService.product.findMany({
                 where: { domain: data.user.domain },
                 include: {
                     categories: {
                         select: {
                             categoryId: true,
-                            name: true,
                         },
                     },
                 },
             });
-
+    
+            // Extract unique categoryIds from products
+            const categoryIds = [
+                ...new Set(
+                    products.flatMap(product => product.categories.map(category => category.categoryId))
+                ),
+            ];
+    
+            // Find category names by categoryIds
+            const categories = await this.prismaService.category.findMany({
+                where: { id: { in: categoryIds } },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+    
+            // Create a map of categoryId to category name
+            const categoryMap = categories.reduce((map, category) => {
+                map[category.id] = category.name;
+                return map;
+            }, {});
+    
             return {
                 products: products.map(product => ({
                     ...product,
@@ -150,9 +179,9 @@ export class ProductService {
                     createdAt: product.created_at.toISOString(),
                     updatedAt: product.updated_at.toISOString(),
                     deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
-                    categories: product.categories.map(cateogry => ({
-                        id: cateogry.categoryId,
-                        name: cateogry.name,
+                    categories: product.categories.map(category => ({
+                        id: category.categoryId,
+                        name: categoryMap[category.categoryId] || 'Unknown',
                     })),
                 })),
             };
@@ -160,27 +189,48 @@ export class ProductService {
             throw error;
         }
     }
+    
 
     async findOneById(data: IFindProductByIdRequest): Promise<IFindProductByIdResponse> {
         try {
-            // find product by id and domain
+            // Find product by id and domain
             const product = await this.prismaService.product.findUnique({
-                where: { domain: data.user.domain, id: data.id },
+                where: {
+                    id: data.id,
+                    domain: data.user.domain,
+                },
                 include: {
                     categories: {
                         select: {
                             categoryId: true,
-                            name: true,
                         },
                     },
                 },
             });
-
-            // check if category not exists
+    
+            // Check if product does not exist
             if (!product) {
                 throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
             }
-
+    
+            // Extract unique categoryIds from product
+            const categoryIds = product.categories.map(category => category.categoryId);
+    
+            // Find category names by categoryIds
+            const categories = await this.prismaService.category.findMany({
+                where: { id: { in: categoryIds } },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+    
+            // Create a map of categoryId to category name
+            const categoryMap = categories.reduce((map, category) => {
+                map[category.id] = category.name;
+                return map;
+            }, {});
+    
             return {
                 ...product,
                 tenantId: product.tenant_id,
@@ -190,15 +240,16 @@ export class ProductService {
                 createdAt: product.created_at.toISOString(),
                 updatedAt: product.updated_at.toISOString(),
                 deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
-                categories: product.categories.map(cateogry => ({
-                    id: cateogry.categoryId,
-                    name: cateogry.name,
+                categories: product.categories.map(category => ({
+                    id: category.categoryId,
+                    name: categoryMap[category.categoryId] || 'Unknown',
                 })),
             };
         } catch (error) {
             throw error;
         }
     }
+    
 
     async update(data: IUpdateProductRequest): Promise<IUpdateProductResponse> {
         const { user, id, categories, ...dataUpdate } = data;

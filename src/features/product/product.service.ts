@@ -575,8 +575,8 @@ export class ProductService {
         }
     }
 
-    async addQuantity(data: IAddProductQuantityRequest): Promise<IAddProductQuantityResponse> {
-        const { user, id, quantity } = data;
+    async addQuantity(data: IAddProductQuantityRequest): Promise<IFindAllProductsResponse> {
+        const { user, description, type, products } = data;
 
         // // check role of user
         // if (user.role.toString() !== getEnumKeyByEnumValue(Role, Role.TENANT)) {
@@ -584,54 +584,65 @@ export class ProductService {
         // }
 
         try {
-            // find the product first
-            const product = await this.prismaService.product.findUnique({
-                where: { id: id, domain: user.domain },
-            });
-
-            // if the product does not exist, throw an error
-            if (!product) {
-                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
-            }
-
             // update product by id and domain in add quantity
-            const newProduct = await this.prismaService.product.update({
-                where: { id, domain: user.domain },
-                data: {
-                    quantity: {
-                        increment: quantity,
-                    },
-                },
-                include: {
-                    categories: {
-                        select: {
-                            categoryId: true,
-                            name: true,
+            const updatedProducts = await Promise.all(products.map(async (prod) => {
+                return await this.prismaService.product.update({
+                    where: { id: prod.id, domain: user.domain },
+                    data: {
+                        quantity: {
+                            [type === 'import' ? 'increment' : 'decrement']: prod.quantity,
                         },
                     },
+                    include: {
+                        categories: {
+                            select: {
+                                categoryId: true,
+                                name: true,
+                            },
+                        },
+                    },
+                });
+            }));
+
+            const categoryIds = [
+                ...new Set(
+                    updatedProducts.flatMap(product => product.categories.map(category => category.categoryId))
+                ),
+            ];
+    
+            // Find category names by categoryIds
+            const categories = await this.prismaService.category.findMany({
+                where: { id: { in: categoryIds } },
+                select: {
+                    id: true,
+                    name: true,
                 },
             });
-
-            // check if product not exists
-            if (!newProduct) {
-                throw new GrpcItemNotFoundException('PRODUCT_NOT_FOUND');
-            }
+    
+            // Create a map of categoryId to category name
+            const categoryMap = categories.reduce((map, category) => {
+                map[category.id] = category.name;
+                return map;
+            }, {});
 
             return {
-                ...newProduct,
-                tenantId: newProduct.tenant_id,
-                numberRating: newProduct.number_rating,
-                price: Number(newProduct.price),
-                rating: Number(newProduct.rating),
-                createdAt: newProduct.created_at.toISOString(),
-                updatedAt: newProduct.updated_at.toISOString(),
-                deletedAt: newProduct.deleted_at ? newProduct.deleted_at.toISOString() : null,
-                categories: newProduct.categories.map(category => ({
-                    id: category.categoryId,
-                    name: category.name,
+                products: updatedProducts.map(product => ({
+                    ...product,
+                    tenantId: product.tenant_id,
+                    numberRating: product.number_rating,
+                    price: Number(product.price),
+                    rating: Number(product.rating),
+                    createdAt: product.created_at.toISOString(),
+                    updatedAt: product.updated_at.toISOString(),
+                    deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
+                    categories: product.categories.map(category => ({
+                        id: category.categoryId,
+                        name: categoryMap[category.categoryId],
+                    })),
                 })),
             };
         } catch (error) {
+
             throw error;
         }
     }

@@ -70,7 +70,7 @@ export class ProductController {
     }
 
     @GrpcMethod('ProductService', 'AddProductQuantity')
-    async addQuantity(data: IAddProductQuantityRequest): Promise<IAddProductQuantityResponse> {
+    async addQuantity(data: IAddProductQuantityRequest): Promise<IFindAllProductsResponse> {
         return await this.productService.addQuantity(data);
     }
 }

@@ -279,7 +279,7 @@ export class OrderService {
                 throw new GrpcResourceExhaustedException('ORDER_CANCELLED');
 
             // Check if user is the owner of the order
-            if (data.user.role.toString() !== getEnumKeyByEnumValue(Role, Role.USER)) {
+            if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER)) {
                 // cancel order with user
                 // check if order is in pending stage
                 if (order.stage !== 'pending')

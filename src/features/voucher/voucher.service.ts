@@ -79,7 +79,7 @@ export class VoucherService {
         try {
             // find all vouchers by domain
             const categories = await this.prismaService.voucher.findMany({
-                where: { domain: data.user.domain },
+                where: { domain: data.domain },
             });
 
             return {
@@ -105,11 +105,11 @@ export class VoucherService {
     }
 
     async findById(data: IFindVoucherByIdRequest): Promise<IFindVoucherByIdResponse> {
-        const { user, id } = data;
+        const { domain, id } = data;
         try {
             // find voucher by id and domain
             const voucher = await this.prismaService.voucher.findFirst({
-                where: { id: id, domain: user.domain },
+                where: { id: id, domain: domain },
             });
 
             // check if voucher not exists

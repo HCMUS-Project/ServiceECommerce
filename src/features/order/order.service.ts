@@ -9,6 +9,7 @@ import {
     ICreateOrderResponse,
     IGetOrderRequest,
     IGetOrderResponse,
+    IListOrdersForTenantRequest,
     IListOrdersRequest,
     IListOrdersResponse,
     IUpdateStageOrderRequest,
@@ -39,30 +40,15 @@ export class OrderService {
             for (let i = 0; i < createOrderDto.productsId.length; i++) {
                 const product = await this.ProductService.findOneById({
                     id: createOrderDto.productsId[i],
-                    user: createOrderDto.user,
+                    domain: createOrderDto.domain,
                 });
                 if (product.quantity < createOrderDto.quantities[i]) {
                     throw new GrpcResourceExhaustedException('PRODUCT_OUT_OF_STOCK');
                 }
-            }
-
-            // Check voucher
-            let voucher_applied = null;
-            if (createOrderDto.voucherId) {
-                voucher_applied = await this.VoucherService.findById({
-                    id: createOrderDto.voucherId,
-                    user: createOrderDto.user,
-                });
-                if (voucher_applied !== null) {
-                    if (new Date(voucher_applied.voucher.expireAt) < new Date()) {
-                        throw new GrpcResourceExhaustedException('VOUCHER_EXPIRED');
-                    }
-                } else {
-                    throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
+                if (product === null) {
+                    throw new GrpcResourceExhaustedException('PRODUCT_NOT_FOUND');
                 }
             }
-
-            voucher_applied = voucher_applied.voucher;
 
             // Calculate total price
             const total_price = await this.calculateTotalPrice(
@@ -72,7 +58,22 @@ export class OrderService {
 
             let price_after_voucher = total_price;
             let discount_value = 0;
-            if (createOrderDto.voucherId) {
+
+            // Check voucher
+            let voucher_applied = null;
+            if (createOrderDto.voucherId !== undefined) {
+                voucher_applied = await this.VoucherService.findById({
+                    id: createOrderDto.voucherId,
+                    domain: createOrderDto.domain,
+                });
+                if (voucher_applied !== null) {
+                    if (new Date(voucher_applied.voucher.expireAt) < new Date()) {
+                        throw new GrpcResourceExhaustedException('VOUCHER_EXPIRED');
+                    }
+                } else {
+                    throw new GrpcItemNotFoundException('VOUCHER_NOT_FOUND');
+                }
+                voucher_applied = voucher_applied.voucher;
                 if (total_price < Number(voucher_applied.min_app_value)) {
                     throw new GrpcResourceExhaustedException('VOUCHER_MIN_APP_VALUE');
                 } else {
@@ -193,6 +194,7 @@ export class OrderService {
 
             const orders = await this.prismaService.order.findMany({
                 where: {
+                    user: data.user.email,
                     domain: data.user.domain,
                     ...filter,
                 },
@@ -217,6 +219,40 @@ export class OrderService {
             throw new Error(error.message);
         }
     }
+
+    async findAllOrdersOfTenant(data: IListOrdersForTenantRequest): Promise<IListOrdersResponse> {
+        try {
+            console.log(data);
+            let filter = {};
+            if (data.stage) filter = { stage: data.stage };
+
+            const orders = await this.prismaService.order.findMany({
+                where: {
+                    domain: data.user.domain,
+                    ...filter,
+                },
+                include: {
+                    orderItems: true,
+                },
+            });
+            return {
+                orders: orders.map(order => ({
+                    orderId: order.id,
+                    address: order.address,
+                    phone: order.phone,
+                    voucherId: order.voucher_id,
+                    stage: order.stage,
+                    products: order.orderItems.map(item => ({
+                        productId: item.product_id,
+                        quantity: item.quantity,
+                    })),
+                })),
+            };
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
 
     async updateOrderStage(data: IUpdateStageOrderRequest): Promise<IUpdateStageOrderResponse> {
         // Check if stage is valid

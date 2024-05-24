@@ -8,6 +8,7 @@ service OrderService {
     rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse) {}
     rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
     rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
+    rpc ListOrdersForTenant(ListOrdersForTenantRequest) returns (ListOrdersResponse) {}
     rpc UpdateStageOrder(UpdateStageOrderRequest) returns (UpdateStageOrderResponse) {}
     rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {}
 }
@@ -46,6 +47,11 @@ message GetOrderResponse{
 }
 
 message ListOrdersRequest{
+    userToken.User user = 1;
+    optional string stage = 2;
+}
+
+message ListOrdersForTenantRequest{
     userToken.User user = 1;
     optional string stage = 2;
 }

@@ -137,7 +137,7 @@ export class ProductService {
         try {
             // Find all products by domain
             const products = await this.prismaService.product.findMany({
-                where: { domain: data.user.domain },
+                where: { domain: data.domain },
                 include: {
                     categories: {
                         select: {
@@ -197,7 +197,7 @@ export class ProductService {
             const product = await this.prismaService.product.findUnique({
                 where: {
                     id: data.id,
-                    domain: data.user.domain,
+                    domain: data.domain,
                 },
                 include: {
                     categories: {
@@ -423,11 +423,11 @@ export class ProductService {
     }
 
     async searchWithFilters(data: ISearchProductsRequest): Promise<ISearchProductsResponse> {
-        const { user, ...filters } = data;
+        const { domain, ...filters } = data;
 
         let productsQuery = await this.prismaService.product.findMany({
             where: {
-                domain: user.domain,
+                domain: domain,
             },
             include: {
                 categories: true, // Include categories

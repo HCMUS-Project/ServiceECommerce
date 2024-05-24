@@ -10,6 +10,7 @@ import {
     IGetOrderResponse,
     IListOrdersRequest,
     IListOrdersResponse,
+    IListOrdersForTenantRequest,
     IUpdateStageOrderRequest,
     IUpdateStageOrderResponse,
 } from './interface/order.interface';
@@ -32,6 +33,11 @@ export class OrderController {
     @GrpcMethod('OrderService', 'ListOrders')
     async listOrders(data: IListOrdersRequest): Promise<IListOrdersResponse> {
         return await this.orderService.findAllOrdersOfUser(data);
+    }
+
+    @GrpcMethod('OrderService', 'ListOrdersForTenant')
+    async listOrdersForTenant(data: IListOrdersForTenantRequest): Promise<IListOrdersResponse> {
+        return await this.orderService.findAllOrdersOfTenant(data);
     }
 
     @GrpcMethod('OrderService', 'UpdateStageOrder')

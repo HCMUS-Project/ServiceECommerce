@@ -62,7 +62,7 @@ export class CartService {
         try {
             // Check quantities of product have to be greater than quantity of product database
             const product = await this.productService.findOneById({
-                user: user,
+                domain: user.domain,
                 id: cartItem.productId,
             });
 
@@ -256,7 +256,7 @@ export class CartService {
         }
         try {
             const product = await this.productService.findOneById({
-                user: user,
+                domain: user.domain,
                 id: cartItems.productId,
             });
             if (product.quantity < cartItems.quantity) {

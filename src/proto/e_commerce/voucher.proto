@@ -39,11 +39,11 @@ message CreateVoucherRequest {
 }
 
 message FindAllVouchersRequest {
-    userToken.User user = 1;
+    string domain = 1;
 }
 
 message FindVoucherByIdRequest {
-    userToken.User user = 1;
+    string domain = 1;
     string id = 2;
 }
 

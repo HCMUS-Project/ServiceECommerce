@@ -40,11 +40,11 @@ message CreateProductRequest {
 }
 
 message FindAllProductsRequest {
-    userToken.User user = 1;
+    string domain = 1;
 }
 
 message FindProductByIdRequest {
-    userToken.User user = 1;
+    string domain = 1;
     string id = 2;
 }
 
@@ -65,7 +65,7 @@ message DeleteProductRequest {
 } 
 
 message SearchProductsRequest {
-    userToken.User user = 1;
+    string domain = 1;
     string name = 2;
     string category = 3;
     double min_price = 4;

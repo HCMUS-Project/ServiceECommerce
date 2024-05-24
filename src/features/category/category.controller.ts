@@ -25,12 +25,12 @@ export class CategoryController {
 
     @GrpcMethod('CategoryService', 'FindAllCategories')
     async findAll(data: IFindAllCategoriesRequest): Promise<any> {
-        return await this.categoryService.findAll(data.user.domain);
+        return await this.categoryService.findAll(data.domain);
     }
 
     @GrpcMethod('CategoryService', 'FindOneCategory')
     async findOne(data: IFindOneCategoryRequest): Promise<IFindOneCategoryResponse> {
-        return await this.categoryService.findOne(data.id, data.user.domain);
+        return await this.categoryService.findOne(data.id, data.domain);
     }
 
     @GrpcMethod('CategoryService', 'UpdateCategory')

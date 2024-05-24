@@ -114,7 +114,7 @@ export class ReviewService {
             const reviews = await this.prismaService.review.findMany({
                 where: {
                     product_id: data.productId,
-                    domain: data.user.domain,
+                    domain: data.domain,
                 },
                 orderBy: { created_at: 'desc' },
                 take: pageSize,
@@ -124,7 +124,7 @@ export class ReviewService {
             const total = await this.prismaService.review.count({
                 where: {
                     product_id: data.productId,
-                    domain: data.user.domain,
+                    domain: data.domain,
                 },
             });
 

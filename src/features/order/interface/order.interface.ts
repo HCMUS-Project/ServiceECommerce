@@ -6,6 +6,7 @@ import {
     GetOrderRequest,
     GetOrderResponse,
     ListOrdersRequest,
+    ListOrdersForTenantRequest,
     ListOrdersResponse,
     OrderProduct,
     UpdateStageOrderRequest,
@@ -29,6 +30,8 @@ export interface IListOrdersRequest extends ListOrdersRequest.AsObject {}
 export interface IListOrdersResponse extends Omit<ListOrdersResponse.AsObject, 'ordersList'> {
     orders: IGetOrderResponse[];
 }
+
+export interface IListOrdersForTenantRequest extends ListOrdersForTenantRequest.AsObject {}
 
 export interface IUpdateStageOrderRequest extends UpdateStageOrderRequest.AsObject {}
 export interface IUpdateStageOrderResponse extends UpdateStageOrderResponse.AsObject {}

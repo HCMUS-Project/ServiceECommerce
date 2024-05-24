@@ -25,7 +25,7 @@ message CreateCategoryResponse {
 }
 
 message FindOneCategoryRequest {
-    userToken.User user = 1;
+    string domain = 1;
     string id = 2;
 }
 
@@ -39,7 +39,7 @@ message FindOneCategoryResponse {
 }
 
 message FindAllCategoriesRequest {
-    userToken.User user = 1;
+    string domain = 1;
 }
 
 message FindAllCategoriesResponse {

@@ -64,7 +64,7 @@ message DeleteVoucherRequest {
 }
 
 message CheckVoucherByCodeRequest {
-    userToken.User user = 1;
+    string domain = 1;
     string code = 2;
 }
 

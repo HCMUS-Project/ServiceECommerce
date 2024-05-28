@@ -181,6 +181,7 @@ export class OrderService {
                     productId: item.product_id,
                     quantity: item.quantity,
                 })),
+                user: order.user
             };
         } catch (error) {
             throw error;
@@ -213,6 +214,7 @@ export class OrderService {
                         productId: item.product_id,
                         quantity: item.quantity,
                     })),
+                    user: order.user
                 })),
             };
         } catch (error) {
@@ -246,6 +248,7 @@ export class OrderService {
                         productId: item.product_id,
                         quantity: item.quantity,
                     })),
+                    user: order.user
                 })),
             };
         } catch (error) {

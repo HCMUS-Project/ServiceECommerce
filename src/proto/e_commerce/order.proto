@@ -44,6 +44,7 @@ message GetOrderResponse{
     string voucher_id = 5;
     string stage = 6;
     repeated OrderProduct products = 7;
+    string user = 8;
 }
 
 message ListOrdersRequest{

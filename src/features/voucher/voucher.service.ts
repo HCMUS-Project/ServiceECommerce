@@ -238,11 +238,11 @@ export class VoucherService {
     async findVoucherByCode(
         data: ICheckVoucherByCodeRequest,
     ): Promise<ICheckVoucherByCodeResponse> {
-        const { user, code } = data;
+        const { domain, code } = data;
         try {
             // find voucher by id and domain
             const voucher = await this.prismaService.voucher.findFirst({
-                where: { voucher_code: code, domain: user.domain },
+                where: { voucher_code: code, domain: domain },
             });
 
             // check if voucher not exists

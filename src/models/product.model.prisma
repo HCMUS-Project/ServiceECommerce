@@ -18,6 +18,7 @@ model Product {
     reviews    Review[]
     cartItems  CartItem[]
     orderItems OrderItem[]
+    transactions TransactionDetails[]
 
     // Define the many-to-many relationship with categories through a junction table
     categories ProductCategory[]

@@ -8,11 +8,12 @@ service ProductService {
     rpc CreateProduct(CreateProductRequest) returns (ProductResponse);
     rpc FindAllProducts(FindAllProductsRequest) returns (FindAllProductsResponse);
     rpc FindProductById(FindProductByIdRequest) returns (ProductResponse);
+    rpc FindBestSellerProducts(FindBestSellerProductRequest) returns (FindBestSellerProductResponse);
+    rpc FindRecommendedProducts(FindRecommendedProductRequest) returns (FindRecommendedProductResponse);
     rpc UpdateProduct(UpdateProductRequest) returns (ProductResponse);
     rpc DeleteProduct(DeleteProductRequest) returns (ProductResponse);
     rpc SearchProducts(SearchProductsRequest) returns (FindAllProductsResponse);
     rpc IncreaseProductView(IncreaseProductViewRequest) returns (ProductResponse);
-    rpc AddProductQuantity(AddProductQuantityRequest) returns (FindAllProductsResponse);
 }
 
 message AddProduct{
@@ -48,6 +49,22 @@ message FindProductByIdRequest {
     string id = 2;
 }
 
+message FindBestSellerProductRequest {
+    string domain = 1;
+}
+
+message FindBestSellerProductResponse {
+    repeated ProductResponse products = 1;
+}
+
+message FindRecommendedProductRequest {
+    string domain = 1;
+}
+
+message FindRecommendedProductResponse {
+    repeated ProductResponse products = 1;
+}
+
 message UpdateProductRequest {
     userToken.User user = 1;
     string id = 2;
@@ -79,13 +96,6 @@ message IncreaseProductViewRequest {
     string id = 3;
 }
 
-message AddProductQuantityRequest {
-    userToken.User user = 1;
-    string description = 2;
-    repeated AddProduct products = 3;
-    string type = 4;
-}
-
 message ProductResponse {
     string id = 1;
     string domain = 2;
@@ -109,6 +119,3 @@ message FindAllProductsResponse {
     repeated ProductResponse products = 1;
 }
 
-message AddProductQuantityResponse {
-    repeated ProductResponse product = 1;
-}

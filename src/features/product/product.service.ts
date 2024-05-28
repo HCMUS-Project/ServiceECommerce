@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import {
-    IAddProductQuantityRequest,
-    IAddProductQuantityResponse,
     ICategory,
     ICreateProductRequest,
     ICreateProductResponse,
@@ -10,8 +8,11 @@ import {
     IDeleteProductResponse,
     IFindAllProductsRequest,
     IFindAllProductsResponse,
+    IFindBestSellerProductsRequest,
+    IFindBestSellerProductsResponse,
     IFindProductByIdRequest,
     IFindProductByIdResponse,
+    IFindRecommendedProductsResponse,
     IIncreaseProductViewRequest,
     IIncreaseProductViewResponse,
     IProductResponse,
@@ -249,7 +250,132 @@ export class ProductService {
             throw error;
         }
     }
+
+    async findBestSeller(data: IFindBestSellerProductsRequest): Promise<IFindBestSellerProductsResponse> {
+        try{
+            const products = await this.prismaService.product.findMany({
+                where: {
+                    domain: data.domain,
+                },
+                take: 5,
+                orderBy: {
+                    sold: 'desc',
+                },
+                include: {
+                    categories: {
+                        select: {
+                            categoryId: true,
+                        },
+                    },
+                },
+            });
+
+            // Extract unique categoryIds from products
+            const categoryIds = [
+                ...new Set(
+                    products.flatMap(product => product.categories.map(category => category.categoryId))
+                ),
+            ];
     
+            // Find category names by categoryIds
+            const categories = await this.prismaService.category.findMany({
+                where: { id: { in: categoryIds } },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+    
+            // Create a map of categoryId to category name
+            const categoryMap = categories.reduce((map, category) => {
+                map[category.id] = category.name;
+                return map;
+            }, {});
+    
+            return {
+                products: products.map(product => ({
+                    ...product,
+                    tenantId: product.tenant_id,
+                    numberRating: product.number_rating,
+                    price: Number(product.price),
+                    rating: Number(product.rating),
+                    createdAt: product.created_at.toISOString(),
+                    updatedAt: product.updated_at.toISOString(),
+                    deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
+                    categories: product.categories.map(category => ({
+                        id: category.categoryId,
+                        name: categoryMap[category.categoryId],
+                    })),
+                })),
+            };
+        }
+        catch (error){
+            throw error;
+        }
+    }
+
+    async findRecommended(data: IFindBestSellerProductsRequest): Promise<IFindRecommendedProductsResponse> {
+        try{
+            const products = await this.prismaService.product.findMany({
+                where: {
+                    domain: data.domain,
+                },
+                take: 5,
+                orderBy: {
+                    rating: 'desc',
+                },
+                include: {
+                    categories: {
+                        select: {
+                            categoryId: true,
+                        },
+                    },
+                },
+            });
+
+            // Extract unique categoryIds from products
+            const categoryIds = [
+                ...new Set(
+                    products.flatMap(product => product.categories.map(category => category.categoryId))
+                ),
+            ];
+    
+            // Find category names by categoryIds
+            const categories = await this.prismaService.category.findMany({
+                where: { id: { in: categoryIds } },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+    
+            // Create a map of categoryId to category name
+            const categoryMap = categories.reduce((map, category) => {
+                map[category.id] = category.name;
+                return map;
+            }, {});
+    
+            return {
+                products: products.map(product => ({
+                    ...product,
+                    tenantId: product.tenant_id,
+                    numberRating: product.number_rating,
+                    price: Number(product.price),
+                    rating: Number(product.rating),
+                    createdAt: product.created_at.toISOString(),
+                    updatedAt: product.updated_at.toISOString(),
+                    deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
+                    categories: product.categories.map(category => ({
+                        id: category.categoryId,
+                        name: categoryMap[category.categoryId],
+                    })),
+                })),
+            };
+        }
+        catch (error){
+            throw error;
+        }
+    }
 
     async update(data: IUpdateProductRequest): Promise<IUpdateProductResponse> {
         const { user, id, categories, ...dataUpdate } = data;
@@ -575,77 +701,6 @@ export class ProductService {
         }
     }
 
-    async addQuantity(data: IAddProductQuantityRequest): Promise<IFindAllProductsResponse> {
-        const { user, description, type, products } = data;
-
-        // // check role of user
-        // if (user.role.toString() !== getEnumKeyByEnumValue(Role, Role.TENANT)) {
-        //     throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
-        // }
-
-        try {
-            // update product by id and domain in add quantity
-            const updatedProducts = await Promise.all(products.map(async (prod) => {
-                return await this.prismaService.product.update({
-                    where: { id: prod.id, domain: user.domain },
-                    data: {
-                        quantity: {
-                            [type === 'import' ? 'increment' : 'decrement']: prod.quantity,
-                        },
-                    },
-                    include: {
-                        categories: {
-                            select: {
-                                categoryId: true,
-                                name: true,
-                            },
-                        },
-                    },
-                });
-            }));
-
-            const categoryIds = [
-                ...new Set(
-                    updatedProducts.flatMap(product => product.categories.map(category => category.categoryId))
-                ),
-            ];
-    
-            // Find category names by categoryIds
-            const categories = await this.prismaService.category.findMany({
-                where: { id: { in: categoryIds } },
-                select: {
-                    id: true,
-                    name: true,
-                },
-            });
-    
-            // Create a map of categoryId to category name
-            const categoryMap = categories.reduce((map, category) => {
-                map[category.id] = category.name;
-                return map;
-            }, {});
-
-            return {
-                products: updatedProducts.map(product => ({
-                    ...product,
-                    tenantId: product.tenant_id,
-                    numberRating: product.number_rating,
-                    price: Number(product.price),
-                    rating: Number(product.rating),
-                    createdAt: product.created_at.toISOString(),
-                    updatedAt: product.updated_at.toISOString(),
-                    deletedAt: product.deleted_at ? product.deleted_at.toISOString() : null,
-                    categories: product.categories.map(category => ({
-                        id: category.categoryId,
-                        name: categoryMap[category.categoryId],
-                    })),
-                })),
-            };
-        } catch (error) {
-
-            throw error;
-        }
-    }
 
     async getPriceOfProduct(productId: string): Promise<Decimal> {
         try {

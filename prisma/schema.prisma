@@ -96,6 +96,7 @@ model Product {
     reviews    Review[]
     cartItems  CartItem[]
     orderItems OrderItem[]
+    transactions TransactionDetails[]
 
     // Define the many-to-many relationship with categories through a junction table
     categories ProductCategory[]
@@ -142,4 +143,24 @@ model Voucher {
     created_at DateTime  @default(now())
     updated_at DateTime  @updatedAt
     deleted_at DateTime?
+}
+
+model Inventory{
+    id        String @id @default(uuid())
+    description String
+    products   TransactionDetails[]
+    domain     String
+    type       String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}
+
+model TransactionDetails{
+    id     String @id @default(uuid())
+    product_id String
+    inventory_id String
+    quantity Int
+
+    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    inventory Inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
 }

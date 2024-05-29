@@ -7,6 +7,8 @@ import {
     ICancelOrderResponse,
     ICreateOrderRequest,
     ICreateOrderResponse,
+    IGetAllOrderValueRequest,
+    IGetAllOrderValueResponse,
     IGetOrderRequest,
     IGetOrderResponse,
     IListOrdersForTenantRequest,
@@ -357,5 +359,105 @@ export class OrderService {
         } catch (error) {
             throw error;
         }
+    }
+
+    async getAllOrderValue(data: IGetAllOrderValueRequest): Promise<IGetAllOrderValueResponse> {
+        try {
+            const orders = await this.prismaService.order.findMany({
+                where: {
+                    domain: data.user.domain,
+                    stage: 'completed',
+                },
+                select: {
+                    total_price: true,
+                    created_at: true,
+                },
+            });
+    
+            let totalOrders = 0;
+            let totalValue = 0;
+            const orderReports = [];
+    
+            if (data.type === 'week') {
+                const ordersByWeek: { [key: string]: { totalOrder: number, totalValue: number } } = {};
+    
+                orders.forEach(order => {
+                    console.log(order);
+                    const weekNumber = this.getDayOfWeek(new Date(order.created_at));
+                    console.log(weekNumber);
+                    if (ordersByWeek[weekNumber]) {
+                        ordersByWeek[weekNumber].totalOrder += 1;
+                        ordersByWeek[weekNumber].totalValue += Number(order.total_price);
+                    } else {
+                        ordersByWeek[weekNumber] = { totalOrder: 1, totalValue: Number(order.total_price) };
+                    }
+                    totalOrders += 1;
+                    totalValue += Number(order.total_price);
+                });
+    
+                for (const [week, report] of Object.entries(ordersByWeek)) {
+                    orderReports.push({
+                        type: week,
+                        totalOrder: report.totalOrder,
+                        totalValue: report.totalValue,
+                    });
+                }
+            }
+            else if (data.type === 'year') {
+                const ordersByWeek: { [key: string]: { totalOrder: number, totalValue: number } } = {};
+    
+                orders.forEach(order => {
+                    console.log(order);
+                    const weekNumber = this.getMonth(new Date(order.created_at));
+                    if (ordersByWeek[weekNumber]) {
+                        ordersByWeek[weekNumber].totalOrder += 1;
+                        ordersByWeek[weekNumber].totalValue += Number(order.total_price);
+                    } else {
+                        ordersByWeek[weekNumber] = { totalOrder: 1, totalValue: Number(order.total_price) };
+                    }
+                    totalOrders += 1;
+                    totalValue += Number(order.total_price);
+                });
+    
+                for (const [week, report] of Object.entries(ordersByWeek)) {
+                    orderReports.push({
+                        type: week,
+                        totalOrder: report.totalOrder,
+                        totalValue: report.totalValue,
+                    });
+                }
+            }
+    
+            return {
+                report: orderReports,
+                total: totalOrders,
+                value: totalValue,
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    getDayOfWeek(date: Date): string {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[date.getUTCDay()];
+    }
+
+    getMonth(date: Date): string {
+        const months = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+        ];
+        return months[date.getUTCMonth()];
     }
 }

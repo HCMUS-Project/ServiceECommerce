@@ -13,6 +13,8 @@ import {
     IListOrdersForTenantRequest,
     IUpdateStageOrderRequest,
     IUpdateStageOrderResponse,
+    IGetAllOrderValueResponse,
+    IGetAllOrderValueRequest,
 } from './interface/order.interface';
 import { ICreateCartResponse } from '../cart/interface/cart.interface';
 
@@ -49,4 +51,10 @@ export class OrderController {
     async cancelOrder(data: ICancelOrderRequest): Promise<ICancelOrderResponse> {
         return await this.orderService.cancelOrder(data);
     }
+
+    @GrpcMethod('OrderService', 'GetAllOrderValue')
+    async getAllOrderValue(data: IGetAllOrderValueRequest): Promise<IGetAllOrderValueResponse> {
+        return await this.orderService.getAllOrderValue(data);
+    }
+    
 }

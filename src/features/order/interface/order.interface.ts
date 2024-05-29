@@ -11,6 +11,9 @@ import {
     OrderProduct,
     UpdateStageOrderRequest,
     UpdateStageOrderResponse,
+    GetAllOrderValueRequest,
+    OrderReport,
+    GetAllOrderValueResponse,
 } from 'src/proto_build/e_commerce/order_pb';
 
 export interface ICreateOrderRequest
@@ -38,3 +41,10 @@ export interface IUpdateStageOrderResponse extends UpdateStageOrderResponse.AsOb
 
 export interface ICancelOrderRequest extends CancelOrderRequest.AsObject {}
 export interface ICancelOrderResponse extends CancelOrderResponse.AsObject {}
+
+export interface IOrderReport extends OrderReport.AsObject {}
+
+export interface IGetAllOrderValueRequest extends GetAllOrderValueRequest.AsObject {}
+export interface IGetAllOrderValueResponse extends Omit<GetAllOrderValueResponse.AsObject, 'reportList'> {
+    report: IOrderProduct[];
+}

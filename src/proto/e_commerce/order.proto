@@ -4,6 +4,12 @@ import "auth/user_token.proto";
 
 package order;
 
+enum OrderType {
+    WEEK = 0;
+    MONTH = 1;
+    YEAR = 2;
+}
+
 service OrderService {
     rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse) {}
     rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
@@ -11,6 +17,7 @@ service OrderService {
     rpc ListOrdersForTenant(ListOrdersForTenantRequest) returns (ListOrdersResponse) {}
     rpc UpdateStageOrder(UpdateStageOrderRequest) returns (UpdateStageOrderResponse) {}
     rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {}
+    rpc GetAllOrderValue(GetAllOrderValueRequest) returns (GetAllOrderValueResponse) {}
 }
 
 message CreateOrderRequest{
@@ -79,4 +86,21 @@ message CancelOrderRequest {
 
 message CancelOrderResponse {
     string result = 1;
+}
+
+message OrderReport {
+    string type = 1;
+    int32 total_order = 2;
+    int32 total_value = 3;
+}
+
+message GetAllOrderValueRequest {
+    userToken.User user = 1;
+    string type = 2;
+}
+
+message GetAllOrderValueResponse {
+    int32 value = 1;
+    int32 total = 2;
+    repeated OrderReport report = 3;
 }

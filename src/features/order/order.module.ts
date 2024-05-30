@@ -7,9 +7,10 @@ import { VoucherService } from '../voucher/voucher.service';
 import { ProductService } from '../product/product.service';
 import { ProductModule } from '../product/product.module';
 import { VoucherModule } from '../voucher/voucher.module';
+import { NodeMailerModule } from 'src/util/node_mailer/node_mailer.module';
 
 @Module({
-    imports: [PrismaModule, VoucherModule, ProductModule],
+    imports: [PrismaModule, VoucherModule, ProductModule, NodeMailerModule],
     controllers: [OrderController],
     providers: [OrderService, PrismaService],
 })

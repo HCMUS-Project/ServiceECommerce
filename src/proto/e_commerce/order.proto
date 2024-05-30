@@ -50,8 +50,10 @@ message GetOrderResponse{
     string address = 4;
     string voucher_id = 5;
     string stage = 6;
-    repeated OrderProduct products = 7;
-    string user = 8;
+    string order_time = 7;
+    int32 total_price = 8;
+    repeated OrderProduct products = 9;
+    string user = 10;
 }
 
 message ListOrdersRequest{

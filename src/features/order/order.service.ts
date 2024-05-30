@@ -27,6 +27,7 @@ import {
     GrpcResourceExhaustedException,
 } from 'nestjs-grpc-exceptions';
 import { Role } from 'src/proto_build/auth/user_token_pb';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class OrderService {
@@ -34,6 +35,7 @@ export class OrderService {
         private prismaService: PrismaService,
         private ProductService: ProductService,
         private VoucherService: VoucherService,
+        private readonly mailerService: MailerService,
     ) {}
 
     async create(createOrderDto: ICreateOrderRequest): Promise<ICreateOrderResponse> {
@@ -115,8 +117,22 @@ export class OrderService {
                     orderItems: true,
                 },
             });
-
-            // Update product quantity
+            const cart = await this.prismaService.cart.findUnique({
+                where: {
+                    unique_cart_domain_user_id: {
+                        user: createOrderDto.user.email,
+                        domain: createOrderDto.user.domain,
+                    },
+                },
+                include: {
+                    cartItems: {
+                        include: {
+                            product: true,
+                        },
+                    },
+                },
+            });
+            // Update product quantity and cartItems
             for (let i = 0; i < order.orderItems.length; i++) {
                 await this.prismaService.product.update({
                     where: {
@@ -125,6 +141,14 @@ export class OrderService {
                     data: {
                         quantity: { decrement: order.orderItems[i].quantity },
                         sold: { increment: order.orderItems[i].quantity },
+                    },
+                });
+                await this.prismaService.cartItem.delete({
+                    where: {
+                        cart_id_product_id: {
+                            product_id: order.orderItems[i].product_id,
+                            cart_id: cart.id,
+                        },
                     },
                 });
             }
@@ -179,6 +203,8 @@ export class OrderService {
                 phone: order.phone,
                 voucherId: order.voucher_id,
                 stage: order.stage,
+                orderTime: String(order.created_at),
+                totalPrice: Number(order.total_price),
                 products: order.orderItems.map(item => ({
                     productId: item.product_id,
                     quantity: item.quantity,
@@ -212,6 +238,8 @@ export class OrderService {
                     phone: order.phone,
                     voucherId: order.voucher_id,
                     stage: order.stage,
+                    orderTime: String(order.created_at),
+                    totalPrice: Number(order.total_price),
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
@@ -246,6 +274,8 @@ export class OrderService {
                     phone: order.phone,
                     voucherId: order.voucher_id,
                     stage: order.stage,
+                    orderTime: String(order.created_at),
+                    totalPrice: Number(order.total_price),
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
@@ -352,6 +382,12 @@ export class OrderService {
                     },
                 });
             }
+
+            await this.mailerService.sendMail({
+                to: data.user.email,
+                subject: 'Your order has been cancelled',
+                text: `Order ${data.id} has been cancelled`,
+            });
 
             return {
                 result: 'success',
@@ -460,4 +496,5 @@ export class OrderService {
         ];
         return months[date.getUTCMonth()];
     }
+    
 }

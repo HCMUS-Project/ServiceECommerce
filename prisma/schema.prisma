@@ -11,8 +11,7 @@ generator client {
 datasource commerce_db {
   provider = "postgresql"
   url      = env("POSTGRES_URI")
-}
-model Cart {
+}model Cart {
     id          String     @id @default(uuid())
     domain      String
     user        String
@@ -46,7 +45,15 @@ model Category {
 
     @@unique([domain, name], name: "unique_category_domain_name")
 }
-model Order {
+model Inventory{
+    id        String @id @default(uuid())
+    description String
+    products   TransactionDetails[]
+    domain     String
+    type       String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}model Order {
     id          String      @id @default(uuid())
     domain      String
     user        String
@@ -102,8 +109,7 @@ model Product {
     categories ProductCategory[]
 
     @@unique([domain, name], name: "unique_product_domain_name")
-}
-model ProductCategory {
+}model ProductCategory {
     id       String   @id @default(uuid())
     product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
     category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -129,7 +135,15 @@ model Review {
 
     product Product @relation(fields: [product_id], references: [id])
 }
-model Voucher {
+model TransactionDetails{
+    id     String @id @default(uuid())
+    product_id String
+    inventory_id String
+    quantity Int
+
+    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    inventory Inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
+}model Voucher {
     id               String   @id @default(uuid())
     type             String   @default("ecommerce")
     domain           String
@@ -143,24 +157,4 @@ model Voucher {
     created_at DateTime  @default(now())
     updated_at DateTime  @updatedAt
     deleted_at DateTime?
-}
-
-model Inventory{
-    id        String @id @default(uuid())
-    description String
-    products   TransactionDetails[]
-    domain     String
-    type       String
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
-}
-
-model TransactionDetails{
-    id     String @id @default(uuid())
-    product_id String
-    inventory_id String
-    quantity Int
-
-    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-    inventory Inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
 }

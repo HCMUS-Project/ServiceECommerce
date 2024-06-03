@@ -562,7 +562,7 @@ export class ProductService {
 
         // Apply filters if any
         if (filters.name) {
-            productsQuery = productsQuery.filter(product => product.name.includes(filters.name));
+            productsQuery = productsQuery.filter(product => product.name.toLowerCase().includes(filters.name.toLowerCase()));
         }
 
         if (filters.category) {

@@ -6,8 +6,7 @@ package order;
 
 enum OrderType {
     WEEK = 0;
-    MONTH = 1;
-    YEAR = 2;
+    YEAR = 1;
 }
 
 service OrderService {
@@ -98,7 +97,7 @@ message OrderReport {
 
 message GetAllOrderValueRequest {
     userToken.User user = 1;
-    string type = 2;
+    OrderType type = 2;
 }
 
 message GetAllOrderValueResponse {

@@ -42,7 +42,7 @@ message AddProductQuantityResponse {
 
 message FindAllInventoryFormRequest {
     userToken.User user = 1;
-    optional string type = 2;
+    string type = 2;
 }
 
 message FindAllInventoryFormResponse {

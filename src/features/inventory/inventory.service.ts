@@ -111,6 +111,7 @@ export class InventoryService {
 
     async findAll(findAllFormDto: IFindAllInventoryFormRequest): Promise<IFindAllInventoryFormResponse> {
         try {
+            console.log(findAllFormDto)
             const inventoryForms = await this.prismaService.inventory.findMany({
                 where: {
                     domain: findAllFormDto.user.domain,

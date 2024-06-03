@@ -28,6 +28,7 @@ import {
 } from 'nestjs-grpc-exceptions';
 import { Role } from 'src/proto_build/auth/user_token_pb';
 import { MailerService } from '@nestjs-modules/mailer';
+import { OrderType } from 'src/proto_build/e_commerce/order_pb';
 
 @Injectable()
 export class OrderService {
@@ -209,7 +210,7 @@ export class OrderService {
                     productId: item.product_id,
                     quantity: item.quantity,
                 })),
-                user: order.user
+                user: order.user,
             };
         } catch (error) {
             throw error;
@@ -244,7 +245,7 @@ export class OrderService {
                         productId: item.product_id,
                         quantity: item.quantity,
                     })),
-                    user: order.user
+                    user: order.user,
                 })),
             };
         } catch (error) {
@@ -280,14 +281,13 @@ export class OrderService {
                         productId: item.product_id,
                         quantity: item.quantity,
                     })),
-                    user: order.user
+                    user: order.user,
                 })),
             };
         } catch (error) {
             throw new Error(error.message);
         }
     }
-
 
     async updateOrderStage(data: IUpdateStageOrderRequest): Promise<IUpdateStageOrderResponse> {
         // Check if stage is valid
@@ -409,28 +409,34 @@ export class OrderService {
                     created_at: true,
                 },
             });
-    
+
             let totalOrders = 0;
             let totalValue = 0;
             const orderReports = [];
-    
-            if (data.type === 'week') {
-                const ordersByWeek: { [key: string]: { totalOrder: number, totalValue: number } } = {};
-    
+            // console.log(data)
+            // if (data.type === 'week')
+            // check type of data
+            if (data.type.toString() === getEnumKeyByEnumValue(OrderType, OrderType.WEEK)) {
+                const ordersByWeek: { [key: string]: { totalOrder: number; totalValue: number } } =
+                    {};
+
                 orders.forEach(order => {
-                    console.log(order);
+                    // console.log(order);
                     const weekNumber = this.getDayOfWeek(new Date(order.created_at));
-                    console.log(weekNumber);
+                    // console.log(weekNumber);
                     if (ordersByWeek[weekNumber]) {
                         ordersByWeek[weekNumber].totalOrder += 1;
                         ordersByWeek[weekNumber].totalValue += Number(order.total_price);
                     } else {
-                        ordersByWeek[weekNumber] = { totalOrder: 1, totalValue: Number(order.total_price) };
+                        ordersByWeek[weekNumber] = {
+                            totalOrder: 1,
+                            totalValue: Number(order.total_price),
+                        };
                     }
                     totalOrders += 1;
                     totalValue += Number(order.total_price);
                 });
-    
+
                 for (const [week, report] of Object.entries(ordersByWeek)) {
                     orderReports.push({
                         type: week,
@@ -438,23 +444,28 @@ export class OrderService {
                         totalValue: report.totalValue,
                     });
                 }
-            }
-            else if (data.type === 'year') {
-                const ordersByWeek: { [key: string]: { totalOrder: number, totalValue: number } } = {};
-    
+            } else if (data.type.toString() === getEnumKeyByEnumValue(OrderType, OrderType.YEAR)) {
+                // if (data.type === 'year')
+                const ordersByWeek: { [key: string]: { totalOrder: number; totalValue: number } } =
+                    {};
+
                 orders.forEach(order => {
-                    console.log(order);
+                    // console.log(order);
                     const weekNumber = this.getMonth(new Date(order.created_at));
+                    // console.log(weekNumber);
                     if (ordersByWeek[weekNumber]) {
                         ordersByWeek[weekNumber].totalOrder += 1;
                         ordersByWeek[weekNumber].totalValue += Number(order.total_price);
                     } else {
-                        ordersByWeek[weekNumber] = { totalOrder: 1, totalValue: Number(order.total_price) };
+                        ordersByWeek[weekNumber] = {
+                            totalOrder: 1,
+                            totalValue: Number(order.total_price),
+                        };
                     }
                     totalOrders += 1;
                     totalValue += Number(order.total_price);
                 });
-    
+
                 for (const [week, report] of Object.entries(ordersByWeek)) {
                     orderReports.push({
                         type: week,
@@ -463,7 +474,7 @@ export class OrderService {
                     });
                 }
             }
-    
+
             return {
                 report: orderReports,
                 total: totalOrders,
@@ -496,5 +507,4 @@ export class OrderService {
         ];
         return months[date.getUTCMonth()];
     }
-    
 }

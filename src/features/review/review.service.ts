@@ -17,6 +17,7 @@ import {
     GrpcPermissionDeniedException,
 } from 'nestjs-grpc-exceptions';
 import { ProductService } from '../product/product.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ReviewService {
@@ -62,6 +63,29 @@ export class ReviewService {
                         review: dataCreate.review,
                     },
                 });
+
+                // Fetch the current product data
+            const currentProduct = await this.prismaService.product.findUnique({
+                where: { id: reviewExists.product_id },
+            });
+
+            // Convert dataCreate.rating to a Decimal
+            const decimalRating = new Decimal(dataCreate.rating);
+
+            // Calculate the new rating
+            const newRating = currentProduct.rating
+                .mul(currentProduct.number_rating)
+                .minus(reviewExists.rating)
+                .plus(decimalRating)
+                .dividedBy(currentProduct.number_rating);
+
+            // Update the product
+            const updatedProduct = await this.prismaService.product.update({
+                where: { id: reviewExists.product_id },
+                data: {
+                    rating: newRating.toNumber(),
+                },
+            });
             } else {
                 // Create review
                 review = await this.prismaService.review.create({
@@ -69,6 +93,30 @@ export class ReviewService {
                         ...reviewConditions,
                         rating: dataCreate.rating,
                         review: dataCreate.review,
+                    },
+                });
+
+                // Fetch the current product data
+                const currentProduct = await this.prismaService.product.findUnique({
+                    where: { id: dataCreate.productId },
+                });
+
+                // Convert dataCreate.rating to a Decimal
+                const decimalRating = new Decimal(dataCreate.rating);
+
+                // Calculate the new rating
+                const newRating = currentProduct.rating
+                    .plus(decimalRating)
+                    .dividedBy(currentProduct.number_rating + 1);
+
+                // Update the product
+                const reviewProduct = await this.prismaService.product.update({
+                    where: { id: dataCreate.productId },
+                    data: {
+                        rating: newRating.toNumber(),
+                        number_rating: {
+                            increment: 1,
+                        },
                     },
                 });
             }
@@ -162,11 +210,10 @@ export class ReviewService {
 
         try {
             // check if review exists
-            if (
-                !(await this.prismaService.review.findFirst({
-                    where: { id: dataUpdate.id, user: user.email, domain: user.domain },
-                }))
-            ) {
+            const oldReview = await this.prismaService.review.findFirst({
+                where: { id: dataUpdate.id, user: user.email, domain: user.domain },
+            });
+            if (!oldReview) {
                 throw new GrpcInvalidArgumentException('REVIEW_NOT_FOUND');
             }
 
@@ -178,6 +225,29 @@ export class ReviewService {
                 data: {
                     rating: dataUpdate.rating,
                     review: dataUpdate.review,
+                },
+            });
+
+            // Fetch the current product data
+            const currentProduct = await this.prismaService.product.findUnique({
+                where: { id: oldReview.product_id },
+            });
+
+            // Convert dataCreate.rating to a Decimal
+            const decimalRating = new Decimal(dataUpdate.rating);
+
+            // Calculate the new rating
+            const newRating = currentProduct.rating
+                .mul(currentProduct.number_rating)
+                .minus(oldReview.rating)
+                .plus(decimalRating)
+                .dividedBy(currentProduct.number_rating);
+
+            // Update the product
+            const updatedProduct = await this.prismaService.product.update({
+                where: { id: oldReview.product_id },
+                data: {
+                    rating: newRating.toNumber(),
                 },
             });
 
@@ -203,13 +273,36 @@ export class ReviewService {
 
         try {
             // check if review exists
+            const oldReview = await this.prismaService.review.findFirst({
+                where: { id: id, user: user.email, domain: user.domain },
+            });
             if (
-                !(await this.prismaService.review.findFirst({
-                    where: { id: id, user: user.email, domain: user.domain },
-                }))
+                !(oldReview)
             ) {
                 throw new GrpcInvalidArgumentException('REVIEW_NOT_FOUND');
             }
+
+            // Fetch the current product data
+            const currentProduct = await this.prismaService.product.findUnique({
+                where: { id: oldReview.product_id },
+            });
+
+            // Calculate the new rating
+            const newRating = currentProduct.rating
+                .mul(currentProduct.number_rating)
+                .minus(oldReview.rating) 
+                .dividedBy(currentProduct.number_rating - 1);
+
+            // Update the product
+            const updatedProduct = await this.prismaService.product.update({
+                where: { id: oldReview.product_id },
+                data: {
+                    rating: newRating.toNumber(),
+                    number_rating: {
+                        decrement: 1,
+                    },
+                },
+            });
 
             await this.prismaService.review.delete({
                 where: {

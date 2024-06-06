@@ -27,10 +27,12 @@ message CreateOrderRequest{
     string phone = 5;
     string address = 6;
     optional string voucher_id = 7;
+    string payment_method = 8;
 }
 
 message CreateOrderResponse{
     string order_id = 1;
+    string payment_url = 2;
 }
 
 message GetOrderRequest{

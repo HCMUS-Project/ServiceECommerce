@@ -9,6 +9,8 @@ import "e_commerce/review.proto";
 import "e_commerce/order.proto";
 import "e_commerce/inventory.proto";
 
+import "service/payment.proto";
+
 package ecommerce;
 
 service AppService {

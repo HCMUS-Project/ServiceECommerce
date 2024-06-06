@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { ProductService } from '../product/product.service';
 import { VoucherService } from '../voucher/voucher.service';
@@ -29,6 +29,9 @@ import {
 import { Role } from 'src/proto_build/auth/user_token_pb';
 import { MailerService } from '@nestjs-modules/mailer';
 import { OrderType } from 'src/proto_build/e_commerce/order_pb';
+import { ICreatePaymentUrlRequest } from '../services/payment_service/payment_grpc.interface';
+import { ConfigService } from '@nestjs/config';
+import { PaymentGrpcService } from '../services/payment_service/payment_grpc.service';
 
 @Injectable()
 export class OrderService {
@@ -37,6 +40,8 @@ export class OrderService {
         private ProductService: ProductService,
         private VoucherService: VoucherService,
         private readonly mailerService: MailerService,
+        private readonly configService: ConfigService,
+        private readonly paymentGrpcService: PaymentGrpcService,
     ) {}
 
     async create(createOrderDto: ICreateOrderRequest): Promise<ICreateOrderResponse> {
@@ -133,6 +138,19 @@ export class OrderService {
                     },
                 },
             });
+
+            // Call payment service to create payment url
+            const dataCreatePaymentUrl: ICreatePaymentUrlRequest = {
+                amount: price_after_voucher,
+                description: 'Payment for order',
+                orderBookingId: [],
+                orderProductsId: [order.id],
+                paymentMethodId: createOrderDto.paymentMethod,
+                vnpReturnUrl: this.configService.get('vnpayCallback'),
+                user: createOrderDto.user,
+            };
+            const url = await this.paymentGrpcService.createPaymentUrl(dataCreatePaymentUrl);
+
             // Update product quantity and cartItems
             for (let i = 0; i < order.orderItems.length; i++) {
                 await this.prismaService.product.update({
@@ -154,10 +172,11 @@ export class OrderService {
                 });
             }
 
-            //TODO: Update cart
+            // Create order response
 
             return {
                 orderId: order.id,
+                paymentUrl: url.paymentUrl,
             };
         } catch (error) {
             throw error;
@@ -436,7 +455,6 @@ export class OrderService {
                     totalOrders += 1;
                     totalValue += Number(order.total_price);
                 });
-
                 for (const [week, report] of Object.entries(ordersByWeek)) {
                     orderReports.push({
                         type: week,

@@ -1,0 +1,15 @@
+model Voucher {
+    id               String   @id @default(uuid())
+    type             String   @default("ecommerce")
+    domain           String
+    voucher_name     String
+    voucher_code     String
+    max_discount     Decimal  @commerce_db.Decimal(19, 2)
+    min_app_value    Decimal  @commerce_db.Decimal(19, 2)
+    discount_percent Decimal  @commerce_db.Decimal(19, 2)
+    expire_at        DateTime
+
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
+}

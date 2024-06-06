@@ -1,11 +1,11 @@
 import { Global, Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import Logger, { LoggerBaseKey, LoggerKey } from '../interfaces/logger.interface';
-import WinstonLogger, { WinstonLoggerTransportsKey } from '../../../utils/winston/winstonLogger';
+import WinstonLogger, { WinstonLoggerTransportsKey } from 'src/util/winston/winstonLogger';
 import LoggerService from '../services/logger.service';
 import NestjsLoggerServiceAdapter from './logger.adapter';
 import { ServiceConfig } from 'src/configs/service/service.config';
 import * as morgan from 'morgan';
-import ConsoleTransport from 'src/utils/winston/consoleTransport';
+import ConsoleTransport from 'src/util/winston/consoleTransport';
 
 @Global()
 @Module({

@@ -12,7 +12,7 @@ module.exports = {
             files: ['**/*.js'],
             excludedFiles: ["node_modules", "dist", "coverage"],
         },
-    ],    root: true,
+    ], root: true,
     env: {
         node: true,
         jest: true,

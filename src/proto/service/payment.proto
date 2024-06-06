@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package payment;
+
+import "auth/user_token.proto";
+
+service PaymentService {
+    rpc CreatePaymentUrl(CreatePaymentUrlRequest) returns (CreatePaymentUrlResponse);
+}
+
+message CreatePaymentUrlRequest {
+    userToken.User user = 1;
+    string payment_method_id = 2;
+    float amount = 3; 
+    repeated string order_products_id = 4;
+    repeated string order_booking_id = 5;
+    string description = 6;
+    string vnp_return_url = 7;
+} 
+
+message CreatePaymentUrlResponse {
+    string payment_url = 1;
+}
+
+message CallbackVnpayRequest {
+    string vnp_amount = 1;
+    string vnp_bank_code = 2;
+    string vnp_bank_tran_no = 3;
+    string vnp_card_type = 4;
+    string vnp_order_info = 5;
+    string vnp_pay_date = 6;
+    string vnp_response_code = 7;
+    string vnp_tmn_code = 8;
+    string vnp_transaction_no = 9;
+    string vnp_transaction_status = 10;
+    string vnp_txn_ref = 11;
+    string vnp_secure_hash = 12;
+}

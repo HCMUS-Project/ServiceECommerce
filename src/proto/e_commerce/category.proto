@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+import "auth/user_token.proto";
+
+package category;
+
+service CategoryService {
+    rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+    rpc FindOneCategory (FindOneCategoryRequest) returns (FindOneCategoryResponse);
+    rpc FindAllCategories (FindAllCategoriesRequest) returns (FindAllCategoriesResponse); 
+    rpc UpdateCategory (UpdateCategoryRequest) returns (UpdateCategoryResponse);
+    rpc RemoveCategory (RemoveCategoryRequest) returns (RemoveCategoryResponse);
+}
+
+message CreateCategoryRequest {
+    userToken.User user = 1; 
+    string name = 2;
+    string description = 3;
+}
+
+message CreateCategoryResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message FindOneCategoryRequest {
+    string domain = 1;
+    string id = 2;
+}
+
+message FindOneCategoryResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    int64 created_at = 4;
+    string domain = 5;
+    int32 total_products = 6;
+}
+
+message FindAllCategoriesRequest {
+    string domain = 1;
+}
+
+message FindAllCategoriesResponse {
+    repeated FindOneCategoryResponse categories = 1;
+}
+
+message UpdateCategoryRequest{
+    userToken.User user = 1;
+    string id = 2;
+    string name = 3;
+    string description = 4;
+}
+
+message UpdateCategoryResponse{
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message RemoveCategoryRequest{
+    userToken.User user = 1;
+    string id = 2;
+}
+
+message RemoveCategoryResponse{
+    string result = 1;
+}

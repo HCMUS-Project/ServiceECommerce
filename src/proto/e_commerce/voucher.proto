@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+import "auth/user_token.proto";  // Ensure the path is correct for the user_token.proto import
+
+package voucher;
+
+service VoucherService {
+    rpc CreateVoucher(CreateVoucherRequest) returns (VoucherResponse);
+    rpc FindAllVouchers(FindAllVouchersRequest) returns (FindAllVouchersResponse);
+    rpc FindVoucherById(FindVoucherByIdRequest) returns (VoucherResponse);
+    rpc UpdateVoucher(UpdateVoucherRequest) returns (VoucherResponse);
+    rpc DeleteVoucher(DeleteVoucherRequest) returns (VoucherResponse);
+    rpc CheckVoucherByCode(CheckVoucherByCodeRequest) returns (VoucherResponse);
+}
+
+message Voucher {
+    string id = 1;
+    string type = 2;
+    string domain = 3;
+    string voucher_name = 4;
+    string voucher_code = 5;
+    double max_discount = 6;
+    double min_app_value = 7;
+    double discount_percent = 8;
+    string expire_at = 9;
+    string created_at = 10;
+    string updated_at = 11;
+    string deleted_at = 12;
+}
+
+message CreateVoucherRequest {
+    userToken.User user = 1;
+    string voucher_name = 2;
+    string voucher_code = 3;
+    double max_discount = 4;
+    double min_app_value = 5;
+    double discount_percent = 6;
+    string expire_at = 7;
+}
+
+message FindAllVouchersRequest {
+    string domain = 1;
+}
+
+message FindVoucherByIdRequest {
+    string domain = 1;
+    string id = 2;
+}
+
+message UpdateVoucherRequest {
+    userToken.User user = 1;
+    string id = 2;
+    string voucher_name = 3;
+    string voucher_code = 4;
+    double max_discount = 5;
+    double min_app_value = 6;
+    double discount_percent = 7;
+    string expire_at = 8;
+}
+
+message DeleteVoucherRequest {
+    userToken.User user = 1;
+    string id = 2;
+}
+
+message CheckVoucherByCodeRequest {
+    string domain = 1;
+    string code = 2;
+}
+
+message VoucherResponse {
+    Voucher voucher = 1;
+}
+
+message FindAllVouchersResponse {
+    repeated Voucher vouchers = 1;
+}

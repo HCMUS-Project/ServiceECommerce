@@ -1,0 +1,11 @@
+model ProductCategory {
+    id       String   @id @default(uuid())
+    product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+    category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+    name       String @default("")
+    productId  String
+    categoryId String
+
+    @@unique([productId, categoryId])
+}

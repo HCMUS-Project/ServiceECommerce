@@ -1,11 +1,7 @@
 /**
- * @fileoverview postgres.config - Configuration for mongo database
+ * @fileOverview mongo.config - Configuration for postgres database
  */
 
 export default () => ({
-    port: parseInt(process.env.MONGO_PORT, 10) || 5432,
-    host: process.env.MONGO_HOST || 'localhost',
-    username: process.env.MONGO_USER,
-    password: process.env.MONGO_PASS,
-    database: process.env.MONGO_DATABASE,
+    postgresUri: process.env.POSTGRES_URI || 'postgres://admin:123456@localhost:5432/nest',
 });

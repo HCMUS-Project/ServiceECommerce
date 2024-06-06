@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+import "auth/user_token.proto";  // Assuming the path is correct for the user_token.proto import
+
+package cart;
+
+service CartService {
+    rpc AddItemsToCart(AddItemsToCartRequest) returns (CartResponse);
+    rpc FindAllCartsByUserId(FindAllCartsByUserIdRequest) returns (FindAllCartsResponse);
+    rpc FindCartById(FindCartByIdRequest) returns (CartResponse);
+    rpc UpdateCart(UpdateCartRequest) returns (CartResponse);
+    rpc DeleteCart(DeleteCartRequest) returns (CartResponse);
+}
+
+message CartItem {
+    string product_id = 1;
+    int32 quantity = 2;
+}
+
+message Cart {
+    string id = 1;
+    repeated CartItem cart_items = 2;
+    string created_at = 3;
+    string updated_at = 4;
+    string deleted_at = 5;
+} 
+
+message AddItemsToCartRequest {
+    userToken.User user = 1;
+    string user_id = 2;
+    CartItem cart_item = 3;
+}
+
+message FindAllCartsByUserIdRequest {
+    userToken.User user = 1;
+    string user_id = 2;
+}
+
+message FindCartByIdRequest {
+    userToken.User user = 1;
+    string user_id = 2;
+}
+
+message UpdateCartRequest {
+    userToken.User user = 1;
+    string user_id = 2;
+    string id = 3;
+    CartItem cart_items = 4;
+}
+
+message DeleteCartRequest {
+    userToken.User user = 1;
+    string id = 2;
+}
+
+message CartResponse {
+    Cart cart = 1;
+}
+
+message FindAllCartsResponse {
+    repeated Cart carts = 1;
+}
+

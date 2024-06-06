@@ -1,0 +1,11 @@
+model Cart {
+    id          String     @id @default(uuid())
+    domain      String
+    user        String
+    cartItems   CartItem[]
+    created_at  DateTime   @default(now())
+    updated_at  DateTime   @updatedAt
+    deleted_at  DateTime?
+
+    @@unique([domain, user], name: "unique_cart_domain_user_id")
+}

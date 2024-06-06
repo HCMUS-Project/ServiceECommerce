@@ -11,143 +11,150 @@ generator client {
 datasource commerce_db {
   provider = "postgresql"
   url      = env("POSTGRES_URI")
+}model Cart {
+    id          String     @id @default(uuid())
+    domain      String
+    user        String
+    cartItems   CartItem[]
+    created_at  DateTime   @default(now())
+    updated_at  DateTime   @updatedAt
+    deleted_at  DateTime?
+
+    @@unique([domain, user], name: "unique_cart_domain_user_id")
 }
-
-model Product {
-  id          String    @id @default(uuid())
-  domain      String    @default("")
-  name        String
-  price       Decimal   @commerce_db.Decimal(19, 2)
-  quantity    Int
-  tenant_id   String
-  description String
-  image       String[]
-  views       Int
-  rating      Decimal   @commerce_db.Decimal(19, 1)
-  number_rating Int @default(0)
-  sold        Int       @default(0)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  deleted_at  DateTime?
-
-  reviews   Review[]
-  cartItems CartItem[]
-  orderItems OrderItem[]
-
-  // Define the many-to-many relationship with categories through a junction table
-  categories ProductCategory[]
-
-  @@unique([domain, name], name: "unique_product_domain_name")
-}
-
-model Category {
-  id          String    @id @default(uuid())
-  domain      String    @default("")
-  name        String
-  description String
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  deleted_at  DateTime?
-
-  ProductCategory ProductCategory[]
-
-  @@unique([domain, name], name: "unique_category_domain_name")
-}
-
-model ProductCategory {
-  id       String   @id @default(uuid())
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  name      String @default("")
-  productId  String
-  categoryId String
-
-  @@unique([productId, categoryId])
-}
-
-model Cart {
-  id          String     @id @default(uuid())
-  domain      String
-  user_id     String
-  cartItems   CartItem[]
-  total_price Decimal    @commerce_db.Decimal(19, 2)
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
-  deleted_at  DateTime?
-
-  @@unique([domain, user_id], name: "unique_cart_domain_user_id")
-}
-
 model CartItem {
-  id         String  @id @default(uuid())
-  cart_id    String
-  product_id String
-  quantity   Int
-  cart       Cart    @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    id         String  @id @default(uuid()) 
+    cart_id    String
+    product_id String
+    quantity   Int
+    cart       Cart    @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
-  @@unique([cart_id, product_id])
+    @@unique([cart_id, product_id])
 }
+model Category {
+    id          String    @id @default(uuid())
+    domain      String    @default("")
+    name        String
+    description String
+    created_at  DateTime  @default(now())
+    updated_at  DateTime  @updatedAt
+    deleted_at  DateTime?
 
-model Order {
-  id                 String   @id @default(uuid())
-  domain             String
-  user_id            String
-  orderItems         OrderItem[]
-  total_price        Decimal  @commerce_db.Decimal(19, 2)
-  stage              String
+    ProductCategory ProductCategory[]
 
-  phone              String @default("")
-  address            String @default("")
-
-  voucher_id         String?
-  voucher_discount   Decimal? @commerce_db.Decimal(19, 2)
-
-  price_after_voucher Decimal  @commerce_db.Decimal(19, 2)
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+    @@unique([domain, name], name: "unique_category_domain_name")
 }
+model Inventory{
+    id        String @id @default(uuid())
+    description String
+    products   TransactionDetails[]
+    domain     String
+    type       String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}model Order {
+    id          String      @id @default(uuid())
+    domain      String
+    user        String
+    orderItems  OrderItem[]
+    total_price Decimal     @commerce_db.Decimal(19, 2)
+    stage       String
 
+    phone   String @default("")
+    address String @default("")
+
+    voucher_id       String?
+    voucher_discount Decimal? @commerce_db.Decimal(19, 2)
+
+    price_after_voucher Decimal @commerce_db.Decimal(19, 2)
+
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
+}
 model OrderItem {
-  id         String  @id @default(uuid())
-  order_id   String
-  product_id String
-  quantity   Int
-  order      Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    id         String  @id @default(uuid())
+    order_id   String
+    product_id String
+    quantity   Int
+    order      Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
-  @@unique([order_id, product_id])
+    @@unique([order_id, product_id])
 }
+model Product {
+    id            String    @id @default(uuid())
+    domain        String    @default("")
+    name          String
+    price         Decimal   @commerce_db.Decimal(19, 2)
+    quantity      Int
+    tenant_id     String
+    description   String
+    images         String[]
+    views         Int
+    rating        Decimal   @commerce_db.Decimal(19, 1)
+    number_rating Int       @default(0)
+    sold          Int       @default(0)
+    created_at    DateTime  @default(now())
+    updated_at    DateTime  @updatedAt
+    deleted_at    DateTime?
 
-model Voucher {
-  id               String   @id @default(uuid())
-  domain           String
-  voucher_name     String
-  voucher_code     String
-  max_discount     Decimal  @commerce_db.Decimal(19, 2)
-  min_app_value    Decimal  @commerce_db.Decimal(19, 2)
-  discount_percent Decimal  @commerce_db.Decimal(19, 2)
-  expire_at        DateTime
+    reviews    Review[]
+    cartItems  CartItem[]
+    orderItems OrderItem[]
+    transactions TransactionDetails[]
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+    // Define the many-to-many relationship with categories through a junction table
+    categories ProductCategory[]
+
+    @@unique([domain, name], name: "unique_product_domain_name")
+}model ProductCategory {
+    id       String   @id @default(uuid())
+    product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+    category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+    name       String @default("")
+    productId  String
+    categoryId String
+
+    @@unique([productId, categoryId])
 }
-
 model Review {
-  id         String  @id @default(uuid())
-  domain     String
-  product_id String
-  user_id    String
-  rating     Decimal @commerce_db.Decimal(19, 1)
-  review     String
+    id         String  @id @default(uuid())
+    type       String  @default("ecommerce")
+    domain     String
+    product_id String
+    user       String
+    rating     Decimal @commerce_db.Decimal(19, 1)
+    review     String
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
 
-  product Product @relation(fields: [product_id], references: [id])
+    product Product @relation(fields: [product_id], references: [id])
+}
+model TransactionDetails{
+    id     String @id @default(uuid())
+    product_id String
+    inventory_id String
+    quantity Int
+
+    product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    inventory Inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
+}model Voucher {
+    id               String   @id @default(uuid())
+    type             String   @default("ecommerce")
+    domain           String
+    voucher_name     String
+    voucher_code     String
+    max_discount     Decimal  @commerce_db.Decimal(19, 2)
+    min_app_value    Decimal  @commerce_db.Decimal(19, 2)
+    discount_percent Decimal  @commerce_db.Decimal(19, 2)
+    expire_at        DateTime
+
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
 }

@@ -1,0 +1,20 @@
+model Order {
+    id          String      @id @default(uuid())
+    domain      String
+    user        String
+    orderItems  OrderItem[]
+    total_price Decimal     @commerce_db.Decimal(19, 2)
+    stage       String
+
+    phone   String @default("")
+    address String @default("")
+
+    voucher_id       String?
+    voucher_discount Decimal? @commerce_db.Decimal(19, 2)
+
+    price_after_voucher Decimal @commerce_db.Decimal(19, 2)
+
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
+}

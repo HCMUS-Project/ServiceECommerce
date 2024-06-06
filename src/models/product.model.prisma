@@ -1,0 +1,27 @@
+model Product {
+    id            String    @id @default(uuid())
+    domain        String    @default("")
+    name          String
+    price         Decimal   @commerce_db.Decimal(19, 2)
+    quantity      Int
+    tenant_id     String
+    description   String
+    images         String[]
+    views         Int
+    rating        Decimal   @commerce_db.Decimal(19, 1)
+    number_rating Int       @default(0)
+    sold          Int       @default(0)
+    created_at    DateTime  @default(now())
+    updated_at    DateTime  @updatedAt
+    deleted_at    DateTime?
+
+    reviews    Review[]
+    cartItems  CartItem[]
+    orderItems OrderItem[]
+    transactions TransactionDetails[]
+
+    // Define the many-to-many relationship with categories through a junction table
+    categories ProductCategory[]
+
+    @@unique([domain, name], name: "unique_product_domain_name")
+}

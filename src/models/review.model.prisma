@@ -1,0 +1,15 @@
+model Review {
+    id         String  @id @default(uuid())
+    type       String  @default("ecommerce")
+    domain     String
+    product_id String
+    user       String
+    rating     Decimal @commerce_db.Decimal(19, 1)
+    review     String
+
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    deleted_at DateTime?
+
+    product Product @relation(fields: [product_id], references: [id])
+}

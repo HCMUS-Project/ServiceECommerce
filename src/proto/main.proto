@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "e_commerce/category.proto";
+import "e_commerce/product.proto";
+import "e_commerce/productCategory.proto";
+import "e_commerce/voucher.proto";
+import "e_commerce/cart.proto";
+import "e_commerce/review.proto";
+import "e_commerce/order.proto";
+import "e_commerce/inventory.proto";
+
+import "service/payment.proto";
+
+package ecommerce;
+
+service AppService {
+  rpc FindOne (HeroById) returns (Hero) {}
+}
+
+message HeroById {
+  int32 id = 1;
+}
+
+message Hero {
+  int32 id = 1;
+  string name = 2;
+}

@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "auth/user_token.proto";  // Assuming the correct path to the user_token.proto file
+
+package productCategory;
+
+service ProductCategoryService {
+    rpc LinkProductCategory(LinkProductCategoryRequest) returns (ProductCategoryResponse);
+    rpc UnlinkProductCategory(UnlinkProductCategoryRequest) returns (ProductCategoryResponse);
+}
+
+message ProductCategory {
+    string id = 1;
+    string product_id = 2;
+    string category_id = 3;
+    string name = 4;
+}
+
+message LinkProductCategoryRequest {
+    userToken.User user = 1;
+    string product_id = 2;
+    string category_id = 3;
+    string name = 4;
+}
+
+message UnlinkProductCategoryRequest {
+    userToken.User user = 1;
+    string product_id = 2;
+    string category_id = 3;
+}
+
+message ProductCategoryResponse {
+    ProductCategory product_category = 1;
+}

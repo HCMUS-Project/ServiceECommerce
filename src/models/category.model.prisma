@@ -1,0 +1,13 @@
+model Category {
+    id          String    @id @default(uuid())
+    domain      String    @default("")
+    name        String
+    description String
+    created_at  DateTime  @default(now())
+    updated_at  DateTime  @updatedAt
+    deleted_at  DateTime?
+
+    ProductCategory ProductCategory[]
+
+    @@unique([domain, name], name: "unique_category_domain_name")
+}

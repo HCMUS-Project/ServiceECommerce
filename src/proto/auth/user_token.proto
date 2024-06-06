@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package userToken;
+
+enum Role {
+    USER = 0;
+    ADMIN = 1;
+    TENANT = 2;
+}
+
+message User {
+    string email = 1;
+    string domain = 2;
+    Role role = 3;
+    string access_token = 4;
+}

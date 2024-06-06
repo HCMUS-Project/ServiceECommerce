@@ -14,10 +14,10 @@ export class MongoService {
         private configService: ConfigService<ConfigModule>,
         @Inject(LoggerKey) private logger: Logger,
     ) {
-        this.uri = configService.get<string>('mongoUri');
-        this.database = configService.get<string>('mongoDb');
-        this.user = configService.get<string>('mongoUser');
-        this.pass = configService.get<string>('mongoPass');
+        this.uri = this.configService.get<string>('mongoUri');
+        this.database = this.configService.get<string>('mongoDb');
+        this.user = this.configService.get<string>('mongoUser');
+        this.pass = this.configService.get<string>('mongoPass');
     }
 
     public async connect(): Promise<typeof mongoose> {

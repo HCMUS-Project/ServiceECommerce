@@ -1,44 +1,44 @@
-import { HttpAdapterHost, NestFactory } from '@nestjs/core';
-import { NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
-import { ConfigsModule } from './configs/config.module';
-import NestjsLoggerServiceAdapter from './core/logger/modules/logger.adapter';
-import { ExceptionsFilter } from './core/responses/filter/exception.filter';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
+    // Create a ConfigService instance
+    const configService = new ConfigService();
+    const port = configService.get<number>('PORT');
+    const host = configService.get<number>('HOST');
+
+    // Create a microservice instance
+    const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+        transport: Transport.GRPC,
         bufferLogs: true,
+        options: {
+            package: [
+                'ecommerce',
+                'userToken',
+                'category',
+                'product',
+                'productCategory',
+                'voucher',
+                'cart',
+                'review',
+                'order',
+                'inventory',
+            ],
+            protoPath: join(__dirname, '../src/proto/main.proto'),
+            url: `${host}:${port}`,
+            loader: {
+                enums: String,
+                objects: true,
+                arrays: true,
+                includeDirs: [join(__dirname, '../src/proto/')],
+            },
+        },
     });
 
-    // Config the logger
-    const customLogger = app.get(NestjsLoggerServiceAdapter);
-    app.useLogger(customLogger);
-
-    app.useGlobalPipes(new ValidationPipe());
-
-    // Config the filter for the exceptions
-    app.useGlobalFilters(new ExceptionsFilter());
-
-    //Get the value from the environment variables
-    const configService = app.get(ConfigService<ConfigsModule>);
-    const port = configService.get<number>('port');
-
-    const config = new DocumentBuilder()
-        .setTitle('Your API')
-        .setDescription('API description')
-        .setVersion('1.0')
-        .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
-
-    // Listen on the port
-    await app.listen(port, async () => {
-        const url = await app.getUrl();
-        customLogger.log(`Server running on ${url}`);
-    });
+    // Start the microservice
+    await app.listen();
 }
-
 bootstrap();

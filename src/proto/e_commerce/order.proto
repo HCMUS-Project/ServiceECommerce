@@ -28,6 +28,7 @@ message CreateOrderRequest{
     string address = 6;
     optional string voucher_id = 7;
     string payment_method = 8;
+    string payment_callback_url = 9;
 }
 
 message CreateOrderResponse{

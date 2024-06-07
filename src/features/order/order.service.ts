@@ -146,7 +146,8 @@ export class OrderService {
                 orderBookingId: [],
                 orderProductsId: [order.id],
                 paymentMethodId: createOrderDto.paymentMethod,
-                vnpReturnUrl: this.configService.get('vnpayCallback'),
+                // vnpReturnUrl: this.configService.get('vnpayCallback'),
+                vnpReturnUrl: createOrderDto.paymentCallbackUrl,
                 user: createOrderDto.user,
             };
             const url = await this.paymentGrpcService.createPaymentUrl(dataCreatePaymentUrl);

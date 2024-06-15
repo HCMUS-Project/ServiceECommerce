@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import {
     ICreateReviewRequest,
@@ -17,11 +17,17 @@ import {
     GrpcPermissionDeniedException,
 } from 'nestjs-grpc-exceptions';
 import { ProductService } from '../product/product.service';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal, DefaultArgs } from '@prisma/client/runtime/library';
+// import { PrismaClient, Prisma } from '@prisma/client';
+import Logger, { LoggerKey } from 'src/core/logger/interfaces/logger.interface';
 
 @Injectable()
 export class ReviewService {
-    constructor(private prismaService: PrismaService) {}
+    constructor(
+        @Inject(LoggerKey) private logger: Logger,
+
+        private prismaService: PrismaService,
+    ) {}
 
     async create(dataRequest: ICreateReviewRequest): Promise<ICreateReviewResponse> {
         const { user, ...dataCreate } = dataRequest;
@@ -32,126 +38,130 @@ export class ReviewService {
         }
 
         try {
-            // Check if user has purchased the product
-            if (
-                user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER) &&
-                !(await this.checkUserPurchase(user.email, user.domain, dataCreate.productId))
-            ) {
-                throw new GrpcInvalidArgumentException('USER_HAS_NOT_PURCHASED_PRODUCT');
-            }
+            return await this.prismaService.$transaction(async (transaction) => {
+                // Check if user has purchased the product
+                const hasPurchased = await this.checkUserPurchase(
+                    user.email,
+                    user.domain,
+                    dataCreate.productId,
+                    transaction,
+                );
+                // this.prismaService.;
+                // console.log(hasPurchased)
+                if (
+                    user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER) &&
+                    !hasPurchased
+                ) {
+                    throw new GrpcInvalidArgumentException('USER_HAS_NOT_PURCHASED_PRODUCT');
+                }
 
-            const reviewConditions = {
-                domain: user.domain,
-                product_id: dataCreate.productId,
-                user: user.email,
-            };
+                const reviewConditions = {
+                    domain: user.domain,
+                    product_id: dataCreate.productId,
+                    user: user.email,
+                };
 
-            const reviewExists = await this.prismaService.review.findFirst({
-                where: reviewConditions,
-            });
-
-            let review = null;
-            // Check if review exists then update review else create review
-            if (reviewExists !== null) {
-                // Update review
-                review = await this.prismaService.review.update({
-                    where: {
-                        id: reviewExists.id,
-                    },
-                    data: {
-                        rating: dataCreate.rating,
-                        review: dataCreate.review,
-                    },
+                const reviewExists = await transaction.review.findFirst({
+                    where: reviewConditions,
                 });
 
-                // Fetch the current product data
-            const currentProduct = await this.prismaService.product.findUnique({
-                where: { id: reviewExists.product_id },
-            });
-
-            // Convert dataCreate.rating to a Decimal
-            const decimalRating = new Decimal(dataCreate.rating);
-
-            // Calculate the new rating
-            const newRating = currentProduct.rating
-                .mul(currentProduct.number_rating)
-                .minus(reviewExists.rating)
-                .plus(decimalRating)
-                .dividedBy(currentProduct.number_rating);
-
-            // Update the product
-            const updatedProduct = await this.prismaService.product.update({
-                where: { id: reviewExists.product_id },
-                data: {
-                    rating: newRating.toNumber(),
-                },
-            });
-            } else {
-                // Create review
-                review = await this.prismaService.review.create({
-                    data: {
-                        ...reviewConditions,
-                        rating: dataCreate.rating,
-                        review: dataCreate.review,
-                    },
-                });
-
-                // Fetch the current product data
-                const currentProduct = await this.prismaService.product.findUnique({
-                    where: { id: dataCreate.productId },
-                });
-
-                // Convert dataCreate.rating to a Decimal
-                const decimalRating = new Decimal(dataCreate.rating);
-
-                // Calculate the new rating
-                const newRating = currentProduct.rating
-                    .plus(decimalRating)
-                    .dividedBy(currentProduct.number_rating + 1);
-
-                // Update the product
-                const reviewProduct = await this.prismaService.product.update({
-                    where: { id: dataCreate.productId },
-                    data: {
-                        rating: newRating.toNumber(),
-                        number_rating: {
-                            increment: 1,
+                let review = null;
+                if (reviewExists !== null) {
+                    review = await transaction.review.update({
+                        where: {
+                            id: reviewExists.id,
                         },
-                    },
-                });
-            }
+                        data: {
+                            rating: dataCreate.rating,
+                            review: dataCreate.review,
+                        },
+                    });
+                    await this.updateProductRating(
+                        dataCreate.productId,
+                        dataCreate.rating,
+                        reviewExists.rating,
+                        transaction,
+                    );
+                } else {
+                    review = await transaction.review.create({
+                        data: {
+                            ...reviewConditions,
+                            rating: dataCreate.rating,
+                            review: dataCreate.review,
+                        },
+                    });
+                    await this.updateProductRating(
+                        dataCreate.productId,
+                        dataCreate.rating,
+                        null,
+                        transaction,
+                        true,
+                    );
+                }
 
-            return {
-                review: {
-                    ...review,
-                    productId: review.product_id,
-                    createdAt: review.created_at.toISOString(),
-                    updatedAt: review.updated_at.toISOString(),
-                },
-            };
+                return {
+                    review: {
+                        ...review,
+                        productId: review.product_id,
+                        createdAt: review.created_at.toISOString(),
+                        updatedAt: review.updated_at.toISOString(),
+                    },
+                };
+            });
         } catch (error) {
             throw error;
         }
     }
 
-    async checkUserPurchase(user: string, domain: string, productId: string) {
-        try {
-            // Check if user has purchased the product
-            const orderWithProduct = await this.prismaService.order.findFirst({
-                where: {
-                    user: user,
-                    domain: domain,
-                    orderItems: {
-                        some: {
-                            product_id: productId,
-                        },
+    async updateProductRating(
+        productId: string,
+        newRating: number,
+        oldRating: Decimal,
+        transaction,
+        isNewReview = false,
+    ) {
+        const currentProduct = await transaction.product.findUnique({
+            where: { id: productId },
+        });
+
+        let decimalRating = new Decimal(newRating);
+        let updatedRating = null;
+
+        if (isNewReview) {
+            updatedRating = currentProduct.rating
+                .mul(currentProduct.number_rating)
+                .plus(decimalRating)
+                .dividedBy(currentProduct.number_rating + 1);
+        } else {
+            updatedRating = currentProduct.rating
+                .mul(currentProduct.number_rating)
+                .minus(new Decimal(oldRating))
+                .plus(decimalRating)
+                .dividedBy(currentProduct.number_rating);
+        }
+
+        await transaction.product.update({
+            where: { id: productId },
+            data: {
+                rating: updatedRating.toNumber(),
+                number_rating: isNewReview ? { increment: 1 } : {increment: 0},
+            },
+        });
+    }
+
+    async checkUserPurchase(user: string, domain: string, productId: string, transaction) {
+        const orderWithProduct = await transaction.order.findFirst({
+            where: {
+                user: user,
+                domain: domain,
+                orderItems: {
+                    some: {
+                        product_id: productId,
                     },
                 },
-            });
-            return orderWithProduct !== null;
-        } catch (error) {
-            throw error;
-        }
+            },
+        });
+        return orderWithProduct !== null;
     }
 
     async findAll(data: IFindAllReviewRequest): Promise<IFindAllReviewResponse> {
@@ -209,57 +219,44 @@ export class ReviewService {
         }
 
         try {
-            // check if review exists
-            const oldReview = await this.prismaService.review.findFirst({
-                where: { id: dataUpdate.id, user: user.email, domain: user.domain },
-            });
-            if (!oldReview) {
-                throw new GrpcInvalidArgumentException('REVIEW_NOT_FOUND');
-            }
+            return await this.prismaService.$transaction(async transaction => {
+                // Check if review exists
+                const oldReview = await transaction.review.findFirst({
+                    where: { id: dataUpdate.id, user: user.email, domain: user.domain },
+                });
+                if (!oldReview) {
+                    throw new GrpcInvalidArgumentException('REVIEW_NOT_FOUND');
+                }
 
-            // check if user has purchased the product
-            const reviewUpdate = await this.prismaService.review.update({
-                where: {
-                    id: dataUpdate.id,
-                },
-                data: {
-                    rating: dataUpdate.rating,
-                    review: dataUpdate.review,
-                },
-            });
+                // Update the review
+                const reviewUpdate = await transaction.review.update({
+                    where: {
+                        id: dataUpdate.id,
+                    },
+                    data: {
+                        rating: dataUpdate.rating,
+                        review: dataUpdate.review,
+                    },
+                });
 
-            // Fetch the current product data
-            const currentProduct = await this.prismaService.product.findUnique({
-                where: { id: oldReview.product_id },
-            });
+                // Update product rating, handling the case where it is not a new review
+                await this.updateProductRating(
+                    oldReview.product_id,
+                    dataUpdate.rating,
+                    oldReview.rating,
+                    transaction,
+                );
 
-            // Convert dataCreate.rating to a Decimal
-            const decimalRating = new Decimal(dataUpdate.rating);
-
-            // Calculate the new rating
-            const newRating = currentProduct.rating
-                .mul(currentProduct.number_rating)
-                .minus(oldReview.rating)
-                .plus(decimalRating)
-                .dividedBy(currentProduct.number_rating);
-
-            // Update the product
-            const updatedProduct = await this.prismaService.product.update({
-                where: { id: oldReview.product_id },
-                data: {
-                    rating: newRating.toNumber(),
-                },
-            });
-
-            return {
-                review: {
-                    ...reviewUpdate,
-                    createdAt: reviewUpdate.created_at.toISOString(),
-                    updatedAt: reviewUpdate.updated_at.toISOString(),
-                    productId: reviewUpdate.product_id,
-                    rating: Number(reviewUpdate.rating),
-                },
-            };
+                return {
+                    review: {
+                        ...reviewUpdate,
+                        createdAt: reviewUpdate.created_at.toISOString(),
+                        updatedAt: reviewUpdate.updated_at.toISOString(),
+                        productId: reviewUpdate.product_id,
+                        rating: Number(reviewUpdate.rating),
+                    },
+                };
+            }); 
         } catch (error) {
             throw error;
         }
@@ -276,9 +273,7 @@ export class ReviewService {
             const oldReview = await this.prismaService.review.findFirst({
                 where: { id: id, user: user.email, domain: user.domain },
             });
-            if (
-                !(oldReview)
-            ) {
+            if (!oldReview) {
                 throw new GrpcInvalidArgumentException('REVIEW_NOT_FOUND');
             }
 
@@ -290,7 +285,7 @@ export class ReviewService {
             // Calculate the new rating
             const newRating = currentProduct.rating
                 .mul(currentProduct.number_rating)
-                .minus(oldReview.rating) 
+                .minus(oldReview.rating)
                 .dividedBy(currentProduct.number_rating - 1);
 
             // Update the product

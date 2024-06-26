@@ -53,7 +53,8 @@ model Inventory{
     type       String
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
-}model Order {
+}
+model Order {
     id          String      @id @default(uuid())
     domain      String
     user        String
@@ -109,7 +110,8 @@ model Product {
     categories ProductCategory[]
 
     @@unique([domain, name], name: "unique_product_domain_name")
-}model ProductCategory {
+}
+model ProductCategory {
     id       String   @id @default(uuid())
     product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
     category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -143,7 +145,8 @@ model TransactionDetails{
 
     product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
     inventory Inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
-}model Voucher {
+}
+model Voucher {
     id               String   @id @default(uuid())
     type             String   @default("ecommerce")
     domain           String
@@ -152,7 +155,8 @@ model TransactionDetails{
     max_discount     Decimal  @commerce_db.Decimal(19, 2)
     min_app_value    Decimal  @commerce_db.Decimal(19, 2)
     discount_percent Decimal  @commerce_db.Decimal(19, 2)
-    expire_at        DateTime
+    start_at         DateTime @default(now())
+    expire_at        DateTime @default(now())
 
     created_at DateTime  @default(now())
     updated_at DateTime  @updatedAt

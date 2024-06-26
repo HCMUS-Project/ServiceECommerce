@@ -26,6 +26,7 @@ message Voucher {
     string created_at = 10;
     string updated_at = 11;
     string deleted_at = 12;
+    string start_at = 13;
 }
 
 message CreateVoucherRequest {
@@ -36,6 +37,7 @@ message CreateVoucherRequest {
     double min_app_value = 5;
     double discount_percent = 6;
     string expire_at = 7;
+    optional string start_at = 8;
 }
 
 message FindAllVouchersRequest {
@@ -56,6 +58,7 @@ message UpdateVoucherRequest {
     double min_app_value = 6;
     double discount_percent = 7;
     string expire_at = 8;
+    optional string start_at = 9;
 }
 
 message DeleteVoucherRequest {

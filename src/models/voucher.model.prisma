@@ -7,7 +7,8 @@ model Voucher {
     max_discount     Decimal  @commerce_db.Decimal(19, 2)
     min_app_value    Decimal  @commerce_db.Decimal(19, 2)
     discount_percent Decimal  @commerce_db.Decimal(19, 2)
-    expire_at        DateTime
+    start_at         DateTime @default(now())
+    expire_at        DateTime @default(now())
 
     created_at DateTime  @default(now())
     updated_at DateTime  @updatedAt

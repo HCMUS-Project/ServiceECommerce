@@ -23,6 +23,7 @@ message InventoryFormResponse {
     string domain = 3;
     string type = 4;
     repeated TransactionProduct products = 5;
+    string created_at = 6;
 }
 
 message AddProductQuantityRequest {
@@ -38,6 +39,7 @@ message AddProductQuantityResponse {
     repeated TransactionProduct products = 3;
     string type = 4;
     string domain = 5;
+    string created_at = 6;
 }
 
 message FindAllInventoryFormRequest {
@@ -62,6 +64,7 @@ message UpdateInventoryFormResponse {
     repeated TransactionProduct products = 3;
     string type = 4;
     string domain = 5;
+    string created_at = 6;
 }
 
 message DeleteInventoryFormRequest {
@@ -75,4 +78,5 @@ message DeleteInventoryFormResponse {
     repeated TransactionProduct products = 3;
     string type = 4;
     string domain = 5;
+    string created_at = 6;
 }

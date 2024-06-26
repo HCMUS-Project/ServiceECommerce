@@ -103,6 +103,7 @@ export class InventoryService {
                 description: createInventoryForm.description,
                 type: createInventoryForm.type,
                 domain: createInventoryForm.domain,
+                createdAt: createInventoryForm.createdAt.toISOString()
             };            
         } catch (error) {
             throw error;
@@ -132,6 +133,7 @@ export class InventoryService {
                     description: form.description,
                     type: form.type,
                     domain: form.domain,
+                    createdAt: form.createdAt.toISOString(),
                 })),
                 inventoryForm: inventoryForms.map(form => ({
                     id: form.id,
@@ -142,6 +144,7 @@ export class InventoryService {
                     description: form.description,
                     type: form.type,
                     domain: form.domain,
+                    createdAt: form.createdAt.toISOString(),
                 })),
             };
 
@@ -256,6 +259,7 @@ export class InventoryService {
                 description: updateInventoryForm.description,
                 type: updateInventoryForm.type,
                 domain: updateInventoryForm.domain,
+                createdAt: updateInventoryForm.createdAt.toISOString()
             };
         } catch (error) {
             throw error;
@@ -298,6 +302,7 @@ export class InventoryService {
                 description: inventoryForm.description,
                 type: inventoryForm.type,
                 domain: inventoryForm.domain,
+                createdAt: inventoryForm.createdAt.toISOString()
             };
         } catch (error) {
             throw error;

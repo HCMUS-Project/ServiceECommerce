@@ -41,7 +41,7 @@ export class VoucherService {
             ) {
                 throw new GrpcAlreadyExistsException('VOUCHER_ALREADY_EXIST');
             }
-
+            const startDate = data.startAt ? new Date(data.startAt) : new Date();
             // create voucher
             const newVoucher = await this.prismaService.voucher.create({
                 data: {
@@ -52,6 +52,7 @@ export class VoucherService {
                     min_app_value: data.minAppValue,
                     discount_percent: data.discountPercent,
                     expire_at: new Date(data.expireAt),
+                    start_at: startDate,
                 },
             });
 
@@ -67,6 +68,7 @@ export class VoucherService {
                     createdAt: newVoucher.created_at.toString(),
                     updatedAt: newVoucher.updated_at.toString(),
                     deletedAt: newVoucher.deleted_at ? newVoucher.deleted_at.toString() : null,
+                    startAt: newVoucher.start_at.toString(),
                 },
                 // expireAt: newVoucher.expire_at
             } as IVoucherResponse;
@@ -79,7 +81,15 @@ export class VoucherService {
         try {
             // find all vouchers by domain
             const categories = await this.prismaService.voucher.findMany({
-                where: { domain: data.domain },
+                where: {
+                    domain: data.domain,
+                    expire_at: {
+                        gte: new Date(),
+                    },
+                    start_at: {
+                        lte: new Date(),
+                    },
+                },
             });
 
             return {
@@ -96,6 +106,7 @@ export class VoucherService {
                             createdAt: voucher.created_at.toString(),
                             updatedAt: voucher.updated_at.toString(),
                             deletedAt: voucher.deleted_at ? voucher.deleted_at.toString() : null,
+                            startAt: voucher.start_at,
                         }) as IVoucherResponse,
                 ),
             };
@@ -129,6 +140,7 @@ export class VoucherService {
                     createdAt: voucher.created_at.toString(),
                     updatedAt: voucher.updated_at.toString(),
                     deletedAt: voucher.deleted_at ? voucher.deleted_at.toString() : null,
+                    startAt: voucher.start_at.toString(),
                 },
                 // expireAt: newVoucher.expire_at
             } as IVoucherResponse;
@@ -182,6 +194,7 @@ export class VoucherService {
                     deletedAt: updatedVoucher.deleted_at
                         ? updatedVoucher.deleted_at.toString()
                         : null,
+                    startAt: updatedVoucher.start_at.toString(),
                 },
                 // expireAt: newVoucher.expire_at
             } as IVoucherResponse;
@@ -228,6 +241,7 @@ export class VoucherService {
                     deletedAt: deletedVoucher.deleted_at
                         ? deletedVoucher.deleted_at.toString()
                         : null,
+                    startAt: deletedVoucher.start_at.toString(),
                 },
                 // expireAt: newVoucher.expire_at
             } as IVoucherResponse;
@@ -262,6 +276,7 @@ export class VoucherService {
                     createdAt: voucher.created_at.toString(),
                     updatedAt: voucher.updated_at.toString(),
                     deletedAt: voucher.deleted_at ? voucher.deleted_at.toString() : null,
+                    startAt: voucher.start_at.toString(),
                 },
                 // expireAt: newVoucher.expire_at
             } as IVoucherResponse;

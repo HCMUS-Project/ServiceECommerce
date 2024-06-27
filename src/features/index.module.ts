@@ -8,6 +8,14 @@ import { OrderModule } from './order/order.module';
 import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
-    imports: [CategoryModule, ProductModule, VoucherModule, CartModule, ReviewModule, OrderModule, InventoryModule],
+    imports: [
+        CategoryModule,
+        ProductModule,
+        VoucherModule,
+        CartModule,
+        ReviewModule,
+        OrderModule,
+        InventoryModule,
+    ],
 })
 export class FeaturesModule {}

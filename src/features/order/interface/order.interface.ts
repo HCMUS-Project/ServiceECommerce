@@ -14,6 +14,9 @@ import {
     GetAllOrderValueRequest,
     OrderReport,
     GetAllOrderValueResponse,
+    OrderReportOfUser,
+    GetOrdersReportOfListUsersRequest,
+    GetOrdersReportOfListUsersResponse,
 } from 'src/proto_build/e_commerce/order_pb';
 
 export interface ICreateOrderRequest
@@ -45,6 +48,17 @@ export interface ICancelOrderResponse extends CancelOrderResponse.AsObject {}
 export interface IOrderReport extends OrderReport.AsObject {}
 
 export interface IGetAllOrderValueRequest extends GetAllOrderValueRequest.AsObject {}
-export interface IGetAllOrderValueResponse extends Omit<GetAllOrderValueResponse.AsObject, 'reportList'> {
+export interface IGetAllOrderValueResponse
+    extends Omit<GetAllOrderValueResponse.AsObject, 'reportList'> {
     report: IOrderProduct[];
+}
+
+export interface IOrderReportOfUser extends OrderReportOfUser.AsObject {}
+export interface IGetOrdersReportOfListUsersRequest
+    extends Omit<GetOrdersReportOfListUsersRequest.AsObject, 'emailsList'> {
+    emails: string[];
+}
+export interface IGetOrdersReportOfListUsersResponse
+    extends Omit<GetOrdersReportOfListUsersResponse.AsObject, 'reportOrdersList'> {
+    reportOrders: IOrderReportOfUser[];
 }

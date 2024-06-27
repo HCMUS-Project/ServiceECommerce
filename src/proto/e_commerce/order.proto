@@ -17,6 +17,7 @@ service OrderService {
     rpc UpdateStageOrder(UpdateStageOrderRequest) returns (UpdateStageOrderResponse) {}
     rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {}
     rpc GetAllOrderValue(GetAllOrderValueRequest) returns (GetAllOrderValueResponse) {}
+    rpc GetOrdersReportOfListUsers(GetOrdersReportOfListUsersRequest) returns (GetOrdersReportOfListUsersResponse) {}
 }
 
 message CreateOrderRequest{
@@ -107,4 +108,18 @@ message GetAllOrderValueResponse {
     int32 value = 1;
     int32 total = 2;
     repeated OrderReport report = 3;
+}
+
+message GetOrdersReportOfListUsersRequest{
+    userToken.User user = 1;
+    repeated string emails = 2;
+}
+
+message OrderReportOfUser{
+    string email = 1;
+    int32 total_order = 2;
+}
+
+message GetOrdersReportOfListUsersResponse{
+    repeated OrderReportOfUser report_orders = 1;
 }

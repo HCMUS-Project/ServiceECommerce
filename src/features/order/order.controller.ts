@@ -15,6 +15,8 @@ import {
     IUpdateStageOrderResponse,
     IGetAllOrderValueResponse,
     IGetAllOrderValueRequest,
+    IGetOrdersReportOfListUsersRequest,
+    IGetOrdersReportOfListUsersResponse,
 } from './interface/order.interface';
 import { ICreateCartResponse } from '../cart/interface/cart.interface';
 
@@ -57,4 +59,8 @@ export class OrderController {
         return await this.orderService.getAllOrderValue(data);
     }
     
+    @GrpcMethod('OrderService', 'GetOrdersReportOfListUsers')
+    async getOrdersReportOfListUsers(data: IGetOrdersReportOfListUsersRequest): Promise<IGetOrdersReportOfListUsersResponse> {
+        return await this.orderService.getOrdersReportOfListUsers(data);
+    }
 }

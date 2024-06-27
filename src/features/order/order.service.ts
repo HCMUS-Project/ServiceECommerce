@@ -11,6 +11,8 @@ import {
     IGetAllOrderValueResponse,
     IGetOrderRequest,
     IGetOrderResponse,
+    IGetOrdersReportOfListUsersRequest,
+    IGetOrdersReportOfListUsersResponse,
     IListOrdersForTenantRequest,
     IListOrdersRequest,
     IListOrdersResponse,
@@ -25,6 +27,7 @@ import { getEnumKeyByEnumValue } from 'src/util/convert_enum/get_key_enum';
 import {
     GrpcPermissionDeniedException,
     GrpcResourceExhaustedException,
+    GrpcUnauthenticatedException,
 } from 'nestjs-grpc-exceptions';
 import { Role } from 'src/proto_build/auth/user_token_pb';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -525,5 +528,57 @@ export class OrderService {
             'December',
         ];
         return months[date.getUTCMonth()];
+    }
+
+    async getOrdersReportOfListUsers(
+        data: IGetOrdersReportOfListUsersRequest,
+    ): Promise<IGetOrdersReportOfListUsersResponse> {
+        const { user, ...listUsers } = data;
+        // console.log(data);
+        if (user.role.toString() !== getEnumKeyByEnumValue(Role, Role.TENANT)) {
+            throw new GrpcUnauthenticatedException('PERMISSION_DENIED');
+        }
+
+        if (user.domain === '') throw new GrpcUnauthenticatedException('DOMAIN_IS_EMPTY');
+
+        try {
+            const orders = await this.prismaService.order.groupBy({
+                by: ['user'],
+                where: {
+                    AND: [
+                        {
+                            stage: 'completed',
+                        },
+                        {
+                            user: {
+                                in: listUsers.emails,
+                            },
+                        },
+                        {
+                            orderItems: {
+                                every: {
+                                    product: {
+                                        domain: user.domain,
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
+                _count: {
+                    id: true,
+                },
+            });
+            // console.log(orders);
+
+            return {
+                reportOrders: orders.map(order => ({
+                    email: order.user,
+                    totalOrder: order._count.id,
+                })),
+            };
+        } catch (error) {
+            throw error;
+        }
     }
 }

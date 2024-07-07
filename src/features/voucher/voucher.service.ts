@@ -7,6 +7,7 @@ import {
     ICreateVoucherResponse,
     IDeleteVoucherRequest,
     IDeleteVoucherResponse,
+    IFindAllVouchersByTenantRequest,
     IFindAllVouchersRequest,
     IFindAllVouchersResponse,
     IFindVoucherByIdRequest,
@@ -80,7 +81,7 @@ export class VoucherService {
     async findAll(data: IFindAllVouchersRequest): Promise<IFindAllVouchersResponse> {
         try {
             // find all vouchers by domain
-            const categories = await this.prismaService.voucher.findMany({
+            const vouchers = await this.prismaService.voucher.findMany({
                 where: {
                     domain: data.domain,
                     expire_at: {
@@ -89,11 +90,47 @@ export class VoucherService {
                     start_at: {
                         lte: new Date(),
                     },
+                    deleted_at: null,
                 },
             });
 
             return {
-                vouchers: categories.map(
+                vouchers: vouchers.map(
+                    voucher =>
+                        ({
+                            ...voucher,
+                            voucherName: voucher.voucher_name,
+                            voucherCode: voucher.voucher_code,
+                            maxDiscount: Number(voucher.max_discount),
+                            minAppValue: Number(voucher.min_app_value),
+                            discountPercent: Number(voucher.discount_percent),
+                            expireAt: voucher.expire_at.toString(),
+                            createdAt: voucher.created_at.toString(),
+                            updatedAt: voucher.updated_at.toString(),
+                            deletedAt: voucher.deleted_at ? voucher.deleted_at.toString() : null,
+                            startAt: voucher.start_at,
+                        }) as IVoucherResponse,
+                ),
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async findAllVouchersByTenant(
+        data: IFindAllVouchersByTenantRequest,
+    ): Promise<IFindAllVouchersResponse> {
+        try {
+            // find all vouchers by domain
+            const vouchers = await this.prismaService.voucher.findMany({
+                where: {
+                    domain: data.user.domain,
+                    deleted_at: null,
+                },
+            });
+
+            return {
+                vouchers: vouchers.map(
                     voucher =>
                         ({
                             ...voucher,
@@ -120,7 +157,7 @@ export class VoucherService {
         try {
             // find voucher by id and domain
             const voucher = await this.prismaService.voucher.findFirst({
-                where: { id: id, domain: domain },
+                where: { id: id, domain: domain, deleted_at: null },
             });
 
             // check if voucher not exists
@@ -151,7 +188,7 @@ export class VoucherService {
 
     async updateVoucher(data: IUpdateVoucherRequest): Promise<IUpdateVoucherResponse> {
         const { user, ...dataUpdate } = data;
-        console.log(dataUpdate);
+        // console.log(dataUpdate);
         // check role of user
         if (user.role.toString() !== getEnumKeyByEnumValue(Role, Role.TENANT)) {
             throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
@@ -214,7 +251,7 @@ export class VoucherService {
         try {
             // find the voucher first
             const voucher = await this.prismaService.voucher.findUnique({
-                where: { id: id, domain: user.domain },
+                where: { id: id, domain: user.domain, deleted_at: null },
             });
 
             // if the voucher does not exist, throw an error
@@ -223,8 +260,11 @@ export class VoucherService {
             }
 
             // delete voucher by id and domain
-            const deletedVoucher = await this.prismaService.voucher.delete({
-                where: { id, domain: user.domain },
+            const deletedVoucher = await this.prismaService.voucher.update({
+                where: { id, domain: user.domain, deleted_at: null },
+                data: {
+                    deleted_at: new Date(),
+                },
             });
 
             return {
@@ -256,7 +296,7 @@ export class VoucherService {
         try {
             // find voucher by id and domain
             const voucher = await this.prismaService.voucher.findFirst({
-                where: { voucher_code: code, domain: domain },
+                where: { voucher_code: code, domain: domain, deleted_at: null },
             });
 
             // check if voucher not exists

@@ -62,6 +62,8 @@ model Order {
     total_price Decimal     @commerce_db.Decimal(19, 2)
     stage       String
 
+    note_cancel String @default("Note cancel")
+
     phone   String @default("")
     address String @default("")
 

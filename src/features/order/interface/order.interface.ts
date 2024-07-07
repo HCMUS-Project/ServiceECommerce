@@ -26,7 +26,9 @@ export interface ICreateOrderRequest
 }
 export interface ICreateOrderResponse extends CreateOrderResponse.AsObject {}
 
-export interface IOrderProduct extends OrderProduct.AsObject {}
+export interface IOrderProduct extends Omit<OrderProduct.AsObject, 'imagesList'> {
+    images: string[];
+}
 export interface IGetOrderRequest extends GetOrderRequest.AsObject {}
 export interface IGetOrderResponse extends Omit<GetOrderResponse.AsObject, 'productsList'> {
     products: IOrderProduct[];

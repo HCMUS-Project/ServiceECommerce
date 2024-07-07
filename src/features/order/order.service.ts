@@ -32,9 +32,14 @@ import {
 import { Role } from 'src/proto_build/auth/user_token_pb';
 import { MailerService } from '@nestjs-modules/mailer';
 import { OrderType } from 'src/proto_build/e_commerce/order_pb';
-import { ICreatePaymentUrlRequest } from '../services/payment_service/payment_grpc.interface';
+import { ICreatePaymentUrlRequest } from '../external_services/payment_service/payment_grpc.interface';
 import { ConfigService } from '@nestjs/config';
-import { PaymentGrpcService } from '../services/payment_service/payment_grpc.service';
+import { PaymentGrpcService } from '../external_services/payment_service/payment_grpc.service';
+import { BrevoMailerService, SmtpParams } from 'src/util/brevo_mailer/brevo.service';
+import { ProfileUserService } from '../external_services/profileUsers/profile.service';
+import { TenantProfileService } from '../external_services/tenant_profile/tenant_profile.interface';
+import { FindTenantProfileByTenantIdRequest } from 'src/proto_build/service/tenantprofile_pb';
+import { FindTenantProfileService } from '../external_services/tenant_profile/tenant_profile.service';
 
 @Injectable()
 export class OrderService {
@@ -45,6 +50,9 @@ export class OrderService {
         private readonly mailerService: MailerService,
         private readonly configService: ConfigService,
         private readonly paymentGrpcService: PaymentGrpcService,
+        private readonly profileGrpcService: ProfileUserService,
+        private readonly findTenantProfileService: FindTenantProfileService,
+        private readonly brevoMailerService: BrevoMailerService,
     ) {}
 
     async create(createOrderDto: ICreateOrderRequest): Promise<ICreateOrderResponse> {
@@ -215,7 +223,15 @@ export class OrderService {
                     domain: data.user.domain,
                 },
                 include: {
-                    orderItems: true,
+                    orderItems: {
+                        include: {
+                            product: {
+                                select: {
+                                    images: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
 
@@ -232,6 +248,7 @@ export class OrderService {
                 products: order.orderItems.map(item => ({
                     productId: item.product_id,
                     quantity: item.quantity,
+                    images: item.product.images,
                 })),
                 user: order.user,
             };
@@ -252,7 +269,15 @@ export class OrderService {
                     ...filter,
                 },
                 include: {
-                    orderItems: true,
+                    orderItems: {
+                        include: {
+                            product: {
+                                select: {
+                                    images: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
             return {
@@ -267,6 +292,7 @@ export class OrderService {
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
+                        images: item.product.images,
                     })),
                     user: order.user,
                 })),
@@ -288,7 +314,15 @@ export class OrderService {
                     ...filter,
                 },
                 include: {
-                    orderItems: true,
+                    orderItems: {
+                        include: {
+                            product:{
+                                select:{
+                                    images: true
+                                }
+                            }
+                        }
+                    },
                 },
             });
             return {
@@ -303,6 +337,7 @@ export class OrderService {
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
+                        images: item.product.images
                     })),
                     user: order.user,
                 })),
@@ -358,6 +393,7 @@ export class OrderService {
 
     async cancelOrder(data: ICancelOrderRequest): Promise<ICancelOrderResponse> {
         try {
+            console.log(data);
             // Check if order exists
             const order = await this.prismaService.order.findUnique({
                 where: {
@@ -372,23 +408,45 @@ export class OrderService {
             if (order.stage === 'cancelled')
                 throw new GrpcResourceExhaustedException('ORDER_CANCELLED');
 
+            if (order.stage !== 'pending')
+                throw new GrpcResourceExhaustedException('CANNOT_CANCEL_ORDER');
+
             // Check if user is the owner of the order
-            if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER)) {
-                // cancel order with user
-                // check if order is in pending stage
-                if (order.stage !== 'pending')
-                    throw new GrpcResourceExhaustedException('CANNOT_CANCEL_ORDER');
-            } else if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.TENANT)) {
-                // cancel order with tenant
-            } else throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
+            if (
+                !(
+                    data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.USER) ||
+                    data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.TENANT)
+                )
+            ) {
+                throw new GrpcPermissionDeniedException('PERMISSION_DENIED');
+            }
 
             // update order stage
-            await this.prismaService.order.update({
+            const updated_order = await this.prismaService.order.update({
                 where: {
                     id: data.id,
                 },
                 data: {
+                    note_cancel: data.noteCancel,
                     stage: 'cancelled',
+                },
+                select: {
+                    orderItems: {
+                        select: {
+                            product: {
+                                select: {
+                                    name: true,
+                                    images: true,
+                                    description: true,
+                                    price: true,
+                                },
+                            },
+                            quantity: true,
+                        },
+                    },
+                    user: true,
+                    id: true,
+                    created_at: true,
                 },
             });
 
@@ -406,11 +464,60 @@ export class OrderService {
                 });
             }
 
-            await this.mailerService.sendMail({
-                to: data.user.email,
-                subject: 'Your order has been cancelled',
-                text: `Order ${data.id} has been cancelled`,
-            });
+            // await this.mailerService.sendMail({
+            //     to: data.user.email,
+            //     subject: 'Your order has been cancelled',
+            //     text: `Order ${data.id} has been cancelled`,
+            // });
+
+            if (data.user.role.toString() === getEnumKeyByEnumValue(Role, Role.TENANT)) {
+                const profiles = await this.profileGrpcService.getAllUserProfile({
+                    user: data.user,
+                });
+                const profileNameCancel = profiles.users.find(user => user.email === order.user);
+                const tenantProfile = (
+                    await this.findTenantProfileService.findTenantProfileByTenantId({
+                        domain: data.user.domain,
+                        tenantId: undefined,
+                    })
+                ).tenantProfile;
+                const to = [
+                    {
+                        email: order.user,
+                        name: profileNameCancel.name,
+                    },
+                ];
+                const templateId = 4;
+                const linkDesktop = 'https://saas-30shine.vercel.app';
+                const linkMobile = 'https://nvukhoi.id.vn/result';
+                const params = {
+                    email: updated_order.user,
+                    type: 'Order',
+                    name: profileNameCancel.name,
+                    domain: data.user.domain,
+                    id: updated_order.id,
+                    date: updated_order.created_at.toISOString(),
+                    noteCancel: data.noteCancel,
+                    logolink: tenantProfile.logo,
+                    descriptionTenant: tenantProfile.description,
+                    trackOrderLinkDesktop: `${linkDesktop}/user-info/order`,
+                    trackOrderLinkMobile: `${linkMobile}`,
+                    continueShoppingLinkDesktop: `${linkDesktop}`,
+                    continueShoppingLinkMobile: `${linkMobile},`,
+                    items: updated_order.orderItems.map(orderItem => ({
+                        name: orderItem.product.name,
+                        price: Number(orderItem.product.price),
+                        img: orderItem.product.images[0],
+                        quantityOrder: orderItem.quantity,
+                        description: orderItem.product.description,
+                    })),
+                } as SmtpParams;
+                const sendMailResponse = await this.brevoMailerService.sendTransactionalEmail(
+                    to,
+                    templateId,
+                    params,
+                );
+            }
 
             return {
                 result: 'success',

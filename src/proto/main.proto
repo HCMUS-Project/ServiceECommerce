@@ -10,6 +10,8 @@ import "e_commerce/order.proto";
 import "e_commerce/inventory.proto";
 
 import "service/payment.proto";
+import "service/profile.proto";
+import "service/tenantprofile.proto";
 
 package ecommerce;
 

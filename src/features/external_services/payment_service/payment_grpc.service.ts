@@ -13,7 +13,7 @@ import { GrpcItemNotFoundException } from 'src/common/exceptions/exceptions';
 export class PaymentGrpcService {
     private paymentService: PaymentService;
 
-    constructor(@Inject('GRPC_TENANT_PAYMENT') private readonly client: ClientGrpc) {}
+    constructor(@Inject('GRPC_ECOMMERCE_PAYMENT') private readonly client: ClientGrpc) {}
 
     onModuleInit() {
         this.paymentService = this.client.getService<PaymentService>('PaymentService');

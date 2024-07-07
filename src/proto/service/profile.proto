@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+import "auth/user_token.proto";
+
+package profile;
+
+service ProfileService {
+    rpc GetAllUserProfile(GetAllUserProfileRequest) returns (GetAllUserProfileResponse);
+    rpc GetProfile (GetProfileRequest) returns (GetProfileResponse);
+}
+
+message GetProfileRequest {
+    userToken.User user = 1;
+}
+ 
+message GetProfileResponse {
+    string email = 1;
+    int32 role = 2;
+    string username = 3;
+    string domain = 4;
+    string phone = 5;
+    string address = 6;
+    string name = 7;
+    string gender = 8;
+    int32 age = 9;
+} 
+message GetAllUserProfileRequest{
+    userToken.User user = 1;
+}
+
+message GetAllUserProfileResponse{
+    repeated GetProfileResponse users = 1;
+}

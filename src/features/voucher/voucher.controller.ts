@@ -7,6 +7,7 @@ import {
     ICreateVoucherRequest,
     ICreateVoucherResponse,
     IDeleteVoucherResponse,
+    IFindAllVouchersByTenantRequest,
     IFindAllVouchersRequest,
     IFindAllVouchersResponse,
     IFindVoucherByIdRequest,
@@ -28,6 +29,11 @@ export class VoucherController {
     @GrpcMethod('VoucherService', 'FindAllVouchers')
     async findAll(data: IFindAllVouchersRequest): Promise<IFindAllVouchersResponse> {
         return await this.voucherService.findAll(data);
+    }
+
+    @GrpcMethod('VoucherService', 'FindAllVouchersByTenant')
+    async findAllVouchersByTenant(data: IFindAllVouchersByTenantRequest): Promise<IFindAllVouchersResponse> {
+        return await this.voucherService.findAllVouchersByTenant(data);
     }
 
     @GrpcMethod('VoucherService', 'FindVoucherById')

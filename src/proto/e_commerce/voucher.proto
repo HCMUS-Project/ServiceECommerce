@@ -7,6 +7,7 @@ package voucher;
 service VoucherService {
     rpc CreateVoucher(CreateVoucherRequest) returns (VoucherResponse);
     rpc FindAllVouchers(FindAllVouchersRequest) returns (FindAllVouchersResponse);
+    rpc FindAllVouchersByTenant(FindAllVouchersByTenantRequest) returns (FindAllVouchersResponse);
     rpc FindVoucherById(FindVoucherByIdRequest) returns (VoucherResponse);
     rpc UpdateVoucher(UpdateVoucherRequest) returns (VoucherResponse);
     rpc DeleteVoucher(DeleteVoucherRequest) returns (VoucherResponse);
@@ -42,6 +43,10 @@ message CreateVoucherRequest {
 
 message FindAllVouchersRequest {
     string domain = 1;
+}
+
+message FindAllVouchersByTenantRequest{
+    userToken.User user = 1; 
 }
 
 message FindVoucherByIdRequest {

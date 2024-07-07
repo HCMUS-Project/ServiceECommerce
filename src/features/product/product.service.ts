@@ -138,7 +138,7 @@ export class ProductService {
         try {
             // Find all products by domain
             const products = await this.prismaService.product.findMany({
-                where: { domain: data.domain },
+                where: { domain: data.domain, deleted_at: null },
                 include: {
                     categories: {
                         select: {
@@ -199,6 +199,7 @@ export class ProductService {
                 where: {
                     id: data.id,
                     domain: data.domain,
+                    deleted_at: null,
                 },
                 include: {
                     categories: {
@@ -256,6 +257,7 @@ export class ProductService {
             const products = await this.prismaService.product.findMany({
                 where: {
                     domain: data.domain,
+                    deleted_at: null,
                 },
                 take: 5,
                 orderBy: {
@@ -319,6 +321,7 @@ export class ProductService {
             const products = await this.prismaService.product.findMany({
                 where: {
                     domain: data.domain,
+                    deleted_at: null,
                 },
                 take: 5,
                 orderBy: {
@@ -501,7 +504,7 @@ export class ProductService {
         try {
             // find the product first
             const product = await this.prismaService.product.findUnique({
-                where: { id: id, domain: user.domain },
+                where: { id: id, domain: user.domain, deleted_at: null },
             });
 
             // if the product does not exist, throw an error
@@ -510,8 +513,11 @@ export class ProductService {
             }
 
             // delete product by id and domain
-            const deletedProduct = await this.prismaService.product.delete({
+            const deletedProduct = await this.prismaService.product.update({
                 where: { id, domain: user.domain },
+                data:{
+                    deleted_at: new Date(),
+                },
                 include: {
                     categories: {
                         select: {
@@ -554,6 +560,7 @@ export class ProductService {
         let productsQuery = await this.prismaService.product.findMany({
             where: {
                 domain: domain,
+                deleted_at: null,
             },
             include: {
                 categories: true, // Include categories
@@ -651,7 +658,7 @@ export class ProductService {
         try {
             // find the product first
             const product = await this.prismaService.product.findUnique({
-                where: { id: id, domain: user.domain },
+                where: { id: id, domain: user.domain, deleted_at: null },
             });
 
             // if the product does not exist, throw an error

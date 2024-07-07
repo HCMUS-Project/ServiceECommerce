@@ -3,6 +3,7 @@ import {
     CheckVoucherByCodeRequest,
     CreateVoucherRequest,
     DeleteVoucherRequest,
+    FindAllVouchersByTenantRequest,
     FindAllVouchersRequest,
     FindAllVouchersResponse,
     FindVoucherByIdRequest,
@@ -23,6 +24,8 @@ export interface IFindAllVouchersResponse
     extends Omit<FindAllVouchersResponse.AsObject, 'vouchersList'> {
     vouchers: IVoucherResponse[];
 }
+
+export interface IFindAllVouchersByTenantRequest extends FindAllVouchersByTenantRequest.AsObject {}
 
 export interface IFindVoucherByIdRequest extends FindVoucherByIdRequest.AsObject {}
 export interface IFindVoucherByIdResponse extends IVoucherResponse {}

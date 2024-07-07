@@ -9,35 +9,29 @@ import { NodeMailerModule } from 'src/util/node_mailer/node_mailer.module';
 import { ClientProxyFactory, ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
-import { PaymentGrpcService } from '../services/payment_service/payment_grpc.service';
+import { PaymentGrpcService } from '../external_services/payment_service/payment_grpc.service';
+import { BrevoMailerModule } from 'src/util/brevo_mailer/brevo.module';
+import {ProfileUserService} from '../external_services/profileUsers/profile.service';
+import {FindTenantProfileService} from '../external_services/tenant_profile/tenant_profile.service';
+import {ExternalServiceModule} from '../external_services/external.module';
 
 @Module({
-    imports: [PrismaModule, VoucherModule, ProductModule, NodeMailerModule, ClientsModule],
+    imports: [
+        PrismaModule,
+        VoucherModule,
+        ProductModule,
+        NodeMailerModule,
+        ClientsModule,
+        BrevoMailerModule,
+        ExternalServiceModule
+    ],
     controllers: [OrderController],
     providers: [
         OrderService,
         PrismaService,
         PaymentGrpcService,
-        {
-            provide: 'GRPC_TENANT_PAYMENT',
-            useFactory: (configService: ConfigService) => {
-                return ClientProxyFactory.create({
-                    transport: Transport.GRPC,
-                    options: {
-                        package: ['payment'],
-                        protoPath: join(__dirname, '../../../src/proto/main.proto'),
-                        url: configService.get<string>('PAYMENT_SERVICE_URL'),
-                        loader: {
-                            enums: String,
-                            objects: true,
-                            arrays: true,
-                            includeDirs: [join(__dirname, '../../../src/proto/')],
-                        },
-                    },
-                });
-            },
-            inject: [ConfigService],
-        },
+        ProfileUserService, 
+        FindTenantProfileService
     ],
 })
 export class OrderModule {}

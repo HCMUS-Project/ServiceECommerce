@@ -37,8 +37,6 @@ import { ConfigService } from '@nestjs/config';
 import { PaymentGrpcService } from '../external_services/payment_service/payment_grpc.service';
 import { BrevoMailerService, SmtpParams } from 'src/util/brevo_mailer/brevo.service';
 import { ProfileUserService } from '../external_services/profileUsers/profile.service';
-import { TenantProfileService } from '../external_services/tenant_profile/tenant_profile.interface';
-import { FindTenantProfileByTenantIdRequest } from 'src/proto_build/service/tenantprofile_pb';
 import { FindTenantProfileService } from '../external_services/tenant_profile/tenant_profile.service';
 
 @Injectable()
@@ -47,14 +45,18 @@ export class OrderService {
         private prismaService: PrismaService,
         private ProductService: ProductService,
         private VoucherService: VoucherService,
-        private readonly mailerService: MailerService,
-        private readonly configService: ConfigService,
         private readonly paymentGrpcService: PaymentGrpcService,
         private readonly profileGrpcService: ProfileUserService,
         private readonly findTenantProfileService: FindTenantProfileService,
         private readonly brevoMailerService: BrevoMailerService,
     ) {}
 
+    /**
+     * Creates a new order.
+     * @param createOrderDto - The data for creating the order.
+     * @returns A promise that resolves to the created order response.
+     * @throws Throws an error if there is an issue creating the order.
+     */
     async create(createOrderDto: ICreateOrderRequest): Promise<ICreateOrderResponse> {
         try {
             // Check product quantity
@@ -195,6 +197,13 @@ export class OrderService {
         }
     }
 
+    /**
+     * Calculates the total price of an order based on the given product IDs and quantities.
+     * @param productIds - An array of product IDs.
+     * @param quantities - An array of quantities corresponding to the product IDs.
+     * @returns A promise that resolves to the total price of the order.
+     * @throws If there is an error while calculating the total price.
+     */
     async calculateTotalPrice(productIds: string[], quantities: number[]): Promise<number> {
         try {
             // Create a variable to store the total price
@@ -215,6 +224,13 @@ export class OrderService {
         }
     }
 
+    /**
+     * Retrieves a single order based on the provided criteria.
+     *
+     * @param data - The criteria to search for the order.
+     * @returns A promise that resolves to the order details.
+     * @throws {GrpcItemNotFoundException} If the order is not found.
+     */
     async findOne(data: IGetOrderRequest): Promise<IGetOrderResponse> {
         try {
             const order = await this.prismaService.order.findUnique({
@@ -257,6 +273,12 @@ export class OrderService {
         }
     }
 
+    /**
+     * Retrieves all orders of a user based on the provided filter criteria.
+     * @param data - The request data containing the filter criteria.
+     * @returns A promise that resolves to the response containing the list of orders.
+     * @throws If an error occurs while retrieving the orders.
+     */
     async findAllOrdersOfUser(data: IListOrdersRequest): Promise<IListOrdersResponse> {
         try {
             let filter = {};
@@ -302,6 +324,12 @@ export class OrderService {
         }
     }
 
+    /**
+     * Retrieves a list of orders for a specific tenant.
+     * @param data - The request data containing the filter criteria.
+     * @returns A promise that resolves to the list of orders.
+     * @throws An error if there was a problem retrieving the orders.
+     */
     async findAllOrdersOfTenant(data: IListOrdersForTenantRequest): Promise<IListOrdersResponse> {
         try {
             console.log(data);
@@ -316,12 +344,12 @@ export class OrderService {
                 include: {
                     orderItems: {
                         include: {
-                            product:{
-                                select:{
-                                    images: true
-                                }
-                            }
-                        }
+                            product: {
+                                select: {
+                                    images: true,
+                                },
+                            },
+                        },
                     },
                 },
             });
@@ -337,7 +365,7 @@ export class OrderService {
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
-                        images: item.product.images
+                        images: item.product.images,
                     })),
                     user: order.user,
                 })),
@@ -347,6 +375,15 @@ export class OrderService {
         }
     }
 
+    /**
+     * Updates the stage of an order.
+     * @param data - The request data for updating the order stage.
+     * @returns A promise that resolves to the response containing the updated order ID and stage.
+     * @throws {GrpcInvalidArgumentException} If the provided stage is invalid.
+     * @throws {GrpcPermissionDeniedException} If the user does not have the required role.
+     * @throws {GrpcItemNotFoundException} If the order does not exist.
+     * @throws {Error} If any other error occurs during the update process.
+     */
     async updateOrderStage(data: IUpdateStageOrderRequest): Promise<IUpdateStageOrderResponse> {
         // Check if stage is valid
         if (
@@ -391,6 +428,14 @@ export class OrderService {
         }
     }
 
+    /**
+     * Cancels an order.
+     * @param data - The cancellation request data.
+     * @returns A promise that resolves to the cancellation response.
+     * @throws {GrpcItemNotFoundException} If the order is not found.
+     * @throws {GrpcResourceExhaustedException} If the order is already cancelled or cannot be cancelled.
+     * @throws {GrpcPermissionDeniedException} If the user does not have permission to cancel the order.
+     */
     async cancelOrder(data: ICancelOrderRequest): Promise<ICancelOrderResponse> {
         try {
             console.log(data);
@@ -512,11 +557,7 @@ export class OrderService {
                         description: orderItem.product.description,
                     })),
                 } as SmtpParams;
-                const sendMailResponse = await this.brevoMailerService.sendTransactionalEmail(
-                    to,
-                    templateId,
-                    params,
-                );
+                await this.brevoMailerService.sendTransactionalEmail(to, templateId, params);
             }
 
             return {
@@ -527,6 +568,12 @@ export class OrderService {
         }
     }
 
+    /**
+     * Retrieves all order values based on the provided request data.
+     * @param data - The request data containing the user domain and order type.
+     * @returns A promise that resolves to an object containing the order reports, total number of orders, and total order value.
+     * @throws If an error occurs while retrieving the order values.
+     */
     async getAllOrderValue(data: IGetAllOrderValueRequest): Promise<IGetAllOrderValueResponse> {
         try {
             const orders = await this.prismaService.order.findMany({
@@ -614,11 +661,21 @@ export class OrderService {
         }
     }
 
+    /**
+     * Returns the day of the week for a given date.
+     * @param date - The date for which to get the day of the week.
+     * @returns The day of the week as a string.
+     */
     getDayOfWeek(date: Date): string {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[date.getUTCDay()];
     }
 
+    /**
+     * Get the month name from a given date.
+     * @param date - The date object.
+     * @returns The name of the month.
+     */
     getMonth(date: Date): string {
         const months = [
             'January',
@@ -637,6 +694,14 @@ export class OrderService {
         return months[date.getUTCMonth()];
     }
 
+    /**
+     * Retrieves the orders report of a list of users.
+     *
+     * @param data - The request data containing the user and list of users.
+     * @returns A promise that resolves to the response containing the orders report.
+     * @throws {GrpcUnauthenticatedException} If the user is not authenticated or doesn't have the required permissions.
+     * @throws {Error} If an error occurs while retrieving the orders report.
+     */
     async getOrdersReportOfListUsers(
         data: IGetOrdersReportOfListUsersRequest,
     ): Promise<IGetOrdersReportOfListUsersResponse> {

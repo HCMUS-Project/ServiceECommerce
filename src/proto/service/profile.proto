@@ -23,6 +23,7 @@ message GetProfileResponse {
     string name = 7;
     string gender = 8;
     int32 age = 9;
+    string created_at = 10;
 } 
 message GetAllUserProfileRequest{
     userToken.User user = 1;

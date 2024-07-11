@@ -316,12 +316,12 @@ export class OrderService {
                 include: {
                     orderItems: {
                         include: {
-                            product:{
-                                select:{
-                                    images: true
-                                }
-                            }
-                        }
+                            product: {
+                                select: {
+                                    images: true,
+                                },
+                            },
+                        },
                     },
                 },
             });
@@ -337,7 +337,7 @@ export class OrderService {
                     products: order.orderItems.map(item => ({
                         productId: item.product_id,
                         quantity: item.quantity,
-                        images: item.product.images
+                        images: item.product.images,
                     })),
                     user: order.user,
                 })),
@@ -551,20 +551,22 @@ export class OrderService {
                     {};
 
                 orders.forEach(order => {
-                    // console.log(order);
-                    const weekNumber = this.getDayOfWeek(new Date(order.created_at));
-                    // console.log(weekNumber);
-                    if (ordersByWeek[weekNumber]) {
-                        ordersByWeek[weekNumber].totalOrder += 1;
-                        ordersByWeek[weekNumber].totalValue += Number(order.total_price);
-                    } else {
-                        ordersByWeek[weekNumber] = {
-                            totalOrder: 1,
-                            totalValue: Number(order.total_price),
-                        };
+                    if (this.isSameWeek(order.created_at, new Date())) {
+                        // console.log(order);
+                        const weekNumber = this.getDayOfWeek(new Date(order.created_at));
+                        // console.log(weekNumber);
+                        if (ordersByWeek[weekNumber]) {
+                            ordersByWeek[weekNumber].totalOrder += 1;
+                            ordersByWeek[weekNumber].totalValue += Number(order.total_price);
+                        } else {
+                            ordersByWeek[weekNumber] = {
+                                totalOrder: 1,
+                                totalValue: Number(order.total_price),
+                            };
+                        }
+                        totalOrders += 1;
+                        totalValue += Number(order.total_price);
                     }
-                    totalOrders += 1;
-                    totalValue += Number(order.total_price);
                 });
                 for (const [week, report] of Object.entries(ordersByWeek)) {
                     orderReports.push({
@@ -579,26 +581,66 @@ export class OrderService {
                     {};
 
                 orders.forEach(order => {
-                    // console.log(order);
-                    const weekNumber = this.getMonth(new Date(order.created_at));
-                    // console.log(weekNumber);
-                    if (ordersByWeek[weekNumber]) {
-                        ordersByWeek[weekNumber].totalOrder += 1;
-                        ordersByWeek[weekNumber].totalValue += Number(order.total_price);
-                    } else {
-                        ordersByWeek[weekNumber] = {
-                            totalOrder: 1,
-                            totalValue: Number(order.total_price),
-                        };
+                    if (order.created_at.getUTCFullYear() === new Date().getUTCFullYear()) {
+                        // console.log(order);
+                        const weekNumber = this.getMonth(new Date(order.created_at));
+                        // console.log(weekNumber);
+                        if (ordersByWeek[weekNumber]) {
+                            ordersByWeek[weekNumber].totalOrder += 1;
+                            ordersByWeek[weekNumber].totalValue += Number(order.total_price);
+                        } else {
+                            ordersByWeek[weekNumber] = {
+                                totalOrder: 1,
+                                totalValue: Number(order.total_price),
+                            };
+                        }
+                        totalOrders += 1;
+                        totalValue += Number(order.total_price);
                     }
-                    totalOrders += 1;
-                    totalValue += Number(order.total_price);
                 });
 
                 for (const [week, report] of Object.entries(ordersByWeek)) {
                     orderReports.push({
                         type: week,
                         totalOrder: report.totalOrder,
+                        totalValue: report.totalValue,
+                    });
+                }
+            } else if (data.type.toString() === getEnumKeyByEnumValue(OrderType, OrderType.MONTH)) {
+                // if (data.type === 'year')
+                const ordersByWeekInMonth: {
+                    [key: string]: { totalOrder: number; totalValue: number };
+                } = {};
+
+                orders.forEach(order => {
+                    // console.log(order.created_at.getUTCMonth() , new Date().getMonth())
+                    if (
+                        order.created_at.getUTCMonth() === new Date().getMonth() &&
+                        order.created_at.getUTCFullYear() === new Date().getUTCFullYear()
+                    ) {
+                        // console.log('haha');
+                        const weekNumberInMonth = this.getWeekOfMonth(new Date(order.created_at));
+                        // console.log(weekNumberInMonth);
+                        if (ordersByWeekInMonth[weekNumberInMonth]) {
+                            ordersByWeekInMonth[weekNumberInMonth].totalOrder += 1;
+                            ordersByWeekInMonth[weekNumberInMonth].totalValue += Number(
+                                order.total_price,
+                            );
+                        } else {
+                            ordersByWeekInMonth[weekNumberInMonth] = {
+                                totalOrder: 1,
+                                totalValue: Number(order.total_price),
+                            };
+                        }
+                        totalOrders += 1;
+                        totalValue += Number(order.total_price);
+                    }
+                });
+
+                for (const [week, report] of Object.entries(ordersByWeekInMonth)) {
+                    orderReports.push({
+                        type: week,
+                        totalBookings: report.totalOrder,
                         totalValue: report.totalValue,
                     });
                 }
@@ -612,6 +654,49 @@ export class OrderService {
         } catch (error) {
             throw error;
         }
+    }
+
+    isSameWeek(date1: Date, date2: Date): boolean {
+        // Get the start of the week (Monday) for the first date
+        const startOfWeek1 = new Date(date1);
+        startOfWeek1.setDate(date1.getDate() - date1.getDay() + (date1.getDay() === 0 ? -6 : 1));
+
+        // Get the start of the week (Monday) for the second date
+        const startOfWeek2 = new Date(date2);
+        startOfWeek2.setDate(date2.getDate() - date2.getDay() + (date2.getDay() === 0 ? -6 : 1));
+
+        // Compare the start of the week dates
+        return (
+            startOfWeek1.getFullYear() === startOfWeek2.getFullYear() &&
+            startOfWeek1.getMonth() === startOfWeek2.getMonth() &&
+            startOfWeek1.getDate() === startOfWeek2.getDate()
+        );
+    }
+
+    /**
+     * Returns the week number of the given date within its month.
+     *
+     * @param date - The date for which to calculate the week number.
+     * @returns The week number in the format "WEEK_X", where X is the week number.
+     */
+    getWeekOfMonth(date: Date): string {
+        // Get the first day of the month
+        const firstDayOfMonth = new Date(date.getFullYear(), date.getUTCMonth(), 1);
+        // Get the day of the week for the first day of the month (0 is Sunday, 6 is Saturday)
+        let firstDayOfWeek = firstDayOfMonth.getDay();
+
+        // Adjust to make Monday the first day of the week
+        // If the first day is Sunday (0), set it to 7 for easier calculations
+        if (firstDayOfWeek === 0) {
+            firstDayOfWeek = 7;
+        }
+
+        // Calculate the adjusted date for Monday start week
+        // console.log(date.getUTCDate() + firstDayOfWeek);
+        const adjustedDate = date.getUTCDate() + firstDayOfWeek - 2;
+        const weekNumber = Math.floor(adjustedDate / 7) + 1;
+
+        return `WEEK_${weekNumber}`;
     }
 
     getDayOfWeek(date: Date): string {

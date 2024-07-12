@@ -153,7 +153,7 @@ export class OrderService {
             // Call payment service to create payment url
             const dataCreatePaymentUrl: ICreatePaymentUrlRequest = {
                 amount: price_after_voucher,
-                description: 'Payment for order',
+                description: 'Payment for User Order',
                 orderBookingId: [],
                 orderProductsId: [order.id],
                 paymentMethodId: createOrderDto.paymentMethod,

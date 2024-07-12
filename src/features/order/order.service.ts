@@ -174,14 +174,14 @@ export class OrderService {
                         sold: { increment: order.orderItems[i].quantity },
                     },
                 });
-                await this.prismaService.cartItem.delete({
-                    where: {
-                        cart_id_product_id: {
-                            product_id: order.orderItems[i].product_id,
-                            cart_id: cart.id,
-                        },
-                    },
-                });
+                // await this.prismaService.cartItem.delete({
+                //     where: {
+                //         cart_id_product_id: {
+                //             product_id: order.orderItems[i].product_id,
+                //             cart_id: cart.id,
+                //         },
+                //     },
+                // });
             }
 
             // Create order response

@@ -6,7 +6,8 @@ package order;
 
 enum OrderType {
     WEEK = 0;
-    YEAR = 1;
+    MONTH = 1;
+    YEAR = 2;
 }
 
 service OrderService {

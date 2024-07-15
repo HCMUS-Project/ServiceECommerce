@@ -213,7 +213,8 @@ export class VoucherService {
                     max_discount: dataUpdate.maxDiscount,
                     min_app_value: dataUpdate.minAppValue,
                     discount_percent: dataUpdate.discountPercent,
-                    expire_at: new Date(dataUpdate.expireAt),
+                    expire_at: dataUpdate.expireAt? new Date(dataUpdate.expireAt): undefined,
+                    start_at: dataUpdate.startAt? new Date(dataUpdate.startAt): undefined,
                 },
             });
 

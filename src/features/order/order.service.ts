@@ -33,11 +33,13 @@ import { Role } from 'src/proto_build/auth/user_token_pb';
 import { MailerService } from '@nestjs-modules/mailer';
 import { OrderType } from 'src/proto_build/e_commerce/order_pb';
 import { ICreatePaymentUrlRequest } from '../external_services/payment_service/payment_grpc.interface';
-import { ConfigService } from '@nestjs/config';
 import { PaymentGrpcService } from '../external_services/payment_service/payment_grpc.service';
 import { BrevoMailerService, SmtpParams } from 'src/util/brevo_mailer/brevo.service';
 import { ProfileUserService } from '../external_services/profileUsers/profile.service';
 import { FindTenantProfileService } from '../external_services/tenant_profile/tenant_profile.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { TypeOrder } from 'src/common/enums/type_order.enum';
 
 @Injectable()
 export class OrderService {
@@ -49,6 +51,7 @@ export class OrderService {
         private readonly profileGrpcService: ProfileUserService,
         private readonly findTenantProfileService: FindTenantProfileService,
         private readonly brevoMailerService: BrevoMailerService,
+        @InjectQueue('e_commerce') private e_commerceQueue: Queue,
     ) {}
 
     /**
@@ -186,8 +189,26 @@ export class OrderService {
                 });
             }
 
-            // Create order response
+            // TEST
+            // const order = {
+            //     id: '123',
+            //     price_after_voucher: 123,
+            //     address: '123',
+            // };
+            // const url = {
+            //     paymentUrl: 'https://google.com',
+            // };
 
+            this.e_commerceQueue.add('notify', {
+                email: createOrderDto.user.email,
+                domain: createOrderDto.user.domain,
+                orderId: order.id,
+                amount: order.price_after_voucher,
+                address: order.address,
+                status: TypeOrder.Created,
+            });
+
+            // Create order response
             return {
                 orderId: order.id,
                 paymentUrl: url.paymentUrl,
@@ -559,6 +580,14 @@ export class OrderService {
                 } as SmtpParams;
                 await this.brevoMailerService.sendTransactionalEmail(to, templateId, params);
             }
+            this.e_commerceQueue.add('notify', {
+                email: data.user.email,
+                domain: data.user.domain,
+                orderId: order.id,
+                amount: order.price_after_voucher,
+                address: order.address,
+                status: TypeOrder.Cancel,
+            });
 
             return {
                 result: 'success',

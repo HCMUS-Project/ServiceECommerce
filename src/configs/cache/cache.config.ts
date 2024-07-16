@@ -9,4 +9,5 @@ export default () => ({
     redisPass: process.env.REDIS_PASS || '',
     redisDb: process.env.REDIS_DB || 0,
     redisUser: process.env.REDIS_USER || '',
+    redisPrefix: process.env.REDIS_PREFIX || 'bullmq',
 });

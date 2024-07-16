@@ -9,13 +9,13 @@ import { ConnectionOptions, QueueOptions } from 'bullmq';
 function getConfig(configService: ConfigService) {
     return {
         connection: {
-            host: configService.get('REDIS_HOST') || 'localhost',
-            port: configService.get('REDIS_PORT') || 6379,
-            password: configService.get('REDIS_PASS') || '',
-            db: configService.get('REDIS_DB') || 0,
-            user: configService.get('REDIS_USER') || '',
+            host: configService.get('redisHost') || 'localhost',
+            port: configService.get('redisPort') || 6379,
+            password: configService.get('redisPass') || '',
+            db: configService.get('redisDb') || 0,
+            user: configService.get('redisUser') || '',
         } as ConnectionOptions,
-        prefix: configService.get('REDIS_PREFIX') || 'bullmq',
+        prefix: configService.get('redisPrefix') || 'bullmq',
     };
 }
 

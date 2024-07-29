@@ -62,7 +62,15 @@ export class CategoryService {
                 where: { domain },
                 include: {
                     _count: {
-                        select: { ProductCategory: true },
+                        select: { ProductCategory: {
+                            where: {
+                                product: {
+                                    deleted_at: {
+                                        not: null,
+                                    }
+                                },
+                            }
+                        } },
                     },
                 },
             });
@@ -89,7 +97,15 @@ export class CategoryService {
                 where: { id, domain },
                 include: {
                     _count: {
-                        select: { ProductCategory: true },
+                        select: { ProductCategory: {
+                            where: {
+                                product: {
+                                    deleted_at: {
+                                        not: null,
+                                    }
+                                },
+                            }
+                        } },
                     },
                 },
             });

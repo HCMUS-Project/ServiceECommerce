@@ -560,7 +560,6 @@ export class ProductService {
         let productsQuery = await this.prismaService.product.findMany({
             where: {
                 domain: domain,
-                deleted_at: null,
             },
             include: {
                 categories: true, // Include categories
@@ -573,30 +572,39 @@ export class ProductService {
         }
 
         if (filters.category) {
-            const categoryId = await this.prismaService.category.findFirst({
+            // Split the category string into an array of categories
+            const categories = filters.category.split(',').map(category => category.trim());
+        
+            // Get the list of categoryIds from the database
+            const categoryIds = await this.prismaService.category.findMany({
                 where: {
-                    name: filters.category,
+                    name: {
+                        in: categories,
+                    },
                 },
                 select: {
                     id: true,
                 },
             });
-            if (categoryId) {
+        
+            if (categoryIds.length > 0) {
                 // Get list of productIds from ProductCategory table
                 const productIds = await this.prismaService.productCategory.findMany({
                     where: {
-                        categoryId: categoryId.id,
+                        categoryId: {
+                            in: categoryIds.map(category => category.id),
+                        },
                     },
                     select: {
                         productId: true,
                     },
                 });
-
-                // Filter out productIds present in productQuery
+        
+                // Filter out productIds present in productsQuery
                 const validProductIds = productIds
                     .map(pc => pc.productId)
                     .filter(productId => productsQuery.some(product => product.id === productId));
-
+        
                 // Get products with productIds in validProductIds list
                 productsQuery = await this.prismaService.product.findMany({
                     where: {
@@ -610,6 +618,7 @@ export class ProductService {
                 });
             }
         }
+        
 
         if (filters.minPrice) {
             productsQuery = productsQuery.filter(

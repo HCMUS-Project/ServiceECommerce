@@ -560,6 +560,7 @@ export class ProductService {
         let productsQuery = await this.prismaService.product.findMany({
             where: {
                 domain: domain,
+                deleted_at: null,
             },
             include: {
                 categories: true, // Include categories
